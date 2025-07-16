@@ -224,6 +224,7 @@ sequenceDiagram
     API->>DB: Marca `abandonment_in = NOW()`
     API->>DB: Inserta mensaje system
     WebSocket Server-->>Sala: Emitir mensaje system
+```
 ---
 
 ## 🎯 Objetivos del Sistema
