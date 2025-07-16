@@ -43,7 +43,7 @@ El sistema utiliza un modelo relacional optimizado para manejar salas de chat en
 
 | Tabla | Descripción | Campos clave |
 |-------|-------------|--------------|
-| `users` | Usuarios del sistema (anónimos y registrados) | `id` (UUID), `name`, `email`, `is_anonymous` |
+| `users` | Usuarios del sistema (anónimos y registrados) | `id` (UUID), `name`, `email`, `is_anonymous`, `profile_photo` |
 | `rooms` | Salas de chat públicas y privadas | `id` (UUID), `name`, `is_private`, `allow_anonymous` |
 | `room_user` | Relación usuarios-salas con historial | `room_id` (UUID), `user_id` (UUID), `joined_at`, `abandonment_in` |
 | `messages` | Mensajes de todas las salas | `id`, `room_id` (UUID), `user_id` (UUID), `type`, `content` |
@@ -67,6 +67,7 @@ Table users {
   email varchar [unique, null]
   password varchar [null]
   is_anonymous boolean [default: false]
+  profile_photo varchar [null]
   created_at datetime
   updated_at datetime
 }
