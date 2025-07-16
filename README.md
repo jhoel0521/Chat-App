@@ -25,9 +25,9 @@ Esta aplicación es una plataforma de **chat en tiempo real** desarrollada como 
 | ------------- | ---------------------------------------------------- |
 | Backend       | Laravel 12.x (PHP 8.4)                               |
 | Base de datos | MariaDB 10.x                                         |
-| Realtime      | Laravel WebSockets (`beyondcode/laravel-websockets`) |
+| Realtime      | Laravel Broadcasting + Reverb WebSockets            |
 | Frontend      | Angular 20.x                                         |
-| Comunicación  | API REST y WebSocket                                 |
+| Comunicación  | API REST y WebSocket Broadcasting                   |
 
 ---
 
@@ -43,11 +43,11 @@ El sistema utiliza un modelo relacional optimizado para manejar salas de chat en
 
 | Tabla | Descripción | Campos clave |
 |-------|-------------|--------------|
-| `users` | Usuarios del sistema (anónimos y registrados) | `id`, `name`, `email`, `is_anonymous` |
-| `rooms` | Salas de chat públicas y privadas | `id`, `name`, `is_private`, `allow_anonymous` |
-| `room_user` | Relación usuarios-salas con historial | `room_id`, `user_id`, `joined_at`, `abandonment_in` |
-| `messages` | Mensajes de todas las salas | `id`, `room_id`, `user_id`, `type`, `content` |
-| `files` | Archivos multimedia compartidos | `id`, `user_id`, `path`, `original_name` |
+| `users` | Usuarios del sistema (anónimos y registrados) | `id` (UUID), `name`, `email`, `is_anonymous` |
+| `rooms` | Salas de chat públicas y privadas | `id` (UUID), `name`, `is_private`, `allow_anonymous` |
+| `room_user` | Relación usuarios-salas con historial | `room_id` (UUID), `user_id` (UUID), `joined_at`, `abandonment_in` |
+| `messages` | Mensajes de todas las salas | `id`, `room_id` (UUID), `user_id` (UUID), `type`, `content` |
+| `files` | Archivos multimedia compartidos | `id`, `user_id` (UUID), `path`, `original_name` |
 
 ### 🔑 Características del modelo
 
