@@ -228,6 +228,99 @@ sequenceDiagram
 ```
 ---
 
+## 🛠️ API Routes y WebSockets
+
+### 📋 Resumen de Rutas API
+
+El backend expone una API REST completa para manejar autenticación, salas, mensajes y archivos. Todas las rutas están prefijadas con `/api/`.
+
+#### 🔐 **Autenticación**
+| Método | Ruta | Controlador | Middleware | Descripción |
+|--------|------|-------------|------------|-------------|
+| POST | `/register` | AuthController@register | `guest` | Registrar nuevo usuario |
+| POST | `/login` | AuthController@login | `guest` | Iniciar sesión con email/password |
+| POST | `/logout` | AuthController@logout | `auth:api` | Cerrar sesión (invalida token) |
+| GET | `/me` | AuthController@me | `auth:api` | Obtener perfil del usuario actual |
+| POST | `/token/refresh` | AuthController@refresh | `auth:api` | Renovar token JWT |
+
+#### 👤 **Usuarios Anónimos**
+| Método | Ruta | Controlador | Middleware | Descripción |
+|--------|------|-------------|------------|-------------|
+| POST | `/guest/init` | GuestController@init | `guest` | Iniciar sesión como anónimo |
+| PATCH | `/guest/upgrade` | GuestController@upgrade | `auth:api` | Convertir anónimo a registrado |
+
+#### 🏠 **Gestión de Salas**
+| Método | Ruta | Controlador | Middleware | Descripción |
+|--------|------|-------------|------------|-------------|
+| GET | `/rooms` | RoomController@index | - | Listar salas públicas disponibles |
+| POST | `/rooms` | RoomController@store | `auth:api` | Crear nueva sala |
+| GET | `/rooms/{room}` | RoomController@show | `auth:api` | Obtener detalles de una sala |
+| POST | `/rooms/{room}/join` | RoomController@join | `auth:api` | Unirse a sala (pública o privada) |
+| POST | `/rooms/{room}/leave` | RoomController@leave | `auth:api` | Abandonar sala |
+
+#### 💬 **Mensajería**
+| Método | Ruta | Controlador | Middleware | Descripción |
+|--------|------|-------------|------------|-------------|
+| GET | `/rooms/{room}/messages` | MessageController@index | `auth:api` | Obtener historial de mensajes |
+| POST | `/rooms/{room}/messages` | MessageController@store | `auth:api` | Enviar mensaje (texto, imagen, etc.) |
+
+#### 📁 **Gestión de Archivos**
+| Método | Ruta | Controlador | Middleware | Descripción |
+|--------|------|-------------|------------|-------------|
+| POST | `/files/upload` | FileController@upload | `auth:api` | Subir archivo multimedia |
+| GET | `/files/{file}` | FileController@show | `auth:api` | Ver/descargar archivo |
+
+### 🌐 **Sistema WebSocket en Tiempo Real**
+
+#### 📡 **Eventos Broadcasting**
+| Evento | Canal | Trigger | Descripción |
+|--------|-------|---------|-------------|
+| `MessageSent` | `room.{id}` | Envío de mensaje | Difunde mensaje nuevo a todos en la sala |
+| `UserJoinedRoom` | `room.{id}` | Usuario se une | Notifica cuando alguien entra a la sala |
+| `UserLeftRoom` | `room.{id}` | Usuario abandona | Notifica cuando alguien sale de la sala |
+
+#### 🔗 **Canales de Comunicación**
+| Canal | Tipo | Autorización | Uso |
+|-------|------|--------------|-----|
+| `App.Models.User.{id}` | Private | Solo el usuario propietario | Notificaciones personales |
+| `room.{roomId}` | Private | Usuarios de la sala | Mensajes y eventos de sala |
+
+#### 💡 **Configuración Frontend (Angular)**
+```typescript
+// Conexión WebSocket con Laravel Reverb
+const echo = new Echo({
+    broadcaster: 'reverb',
+    key: process.env.VITE_REVERB_APP_KEY,
+    wsHost: process.env.VITE_REVERB_HOST,
+    wsPort: process.env.VITE_REVERB_PORT,
+    forceTLS: false,
+    enabledTransports: ['ws', 'wss'],
+});
+
+// Escuchar eventos de una sala específica
+echo.private(`room.${roomId}`)
+    .listen('message.sent', (data) => {
+        // Nuevo mensaje recibido en tiempo real
+        this.addMessageToChat(data.message);
+    })
+    .listen('user.joined', (data) => {
+        // Usuario se unió a la sala
+        this.showUserJoinedNotification(data.user);
+    })
+    .listen('user.left', (data) => {
+        // Usuario abandonó la sala
+        this.showUserLeftNotification(data.user);
+    });
+```
+
+#### ⚡ **Flujo de Comunicación en Tiempo Real**
+1. **📱 Usuario Frontend**: Envía mensaje via POST `/api/rooms/{room}/messages`
+2. **🖥️ Laravel Backend**: Guarda en DB y dispara evento `MessageSent`
+3. **🌐 Reverb WebSocket**: Difunde evento a canal `room.{id}`
+4. **📱 Todos los Frontend**: Reciben evento y actualizan UI instantáneamente
+
+---
+
 ## 🎯 Objetivos del Sistema
 
 | Objetivo | Estado | Descripción |
@@ -246,9 +339,19 @@ sequenceDiagram
 |------------|--------|-------------|
 | Modelo de datos | ✅ **Finalizado** | Diagrama ER y estructura DBML completa |
 | Diagramas UML | ✅ **Completado** | 6 diagramas de secuencia documentados |
-| Backend API | 🔜 **En desarrollo** | Laravel + MariaDB + API REST |
-| WebSocket | 🔜 **En desarrollo** | Comunicación en tiempo real |
+| Backend API | ✅ **Completado** | Laravel + MariaDB + 16 rutas API funcionales |
+| WebSocket | ✅ **Completado** | 3 eventos en tiempo real con Laravel Reverb |
+| Autenticación | ✅ **Completado** | JWT Auth + usuarios anónimos + upgrade |
+| Base de datos | ✅ **Completado** | 5 tablas con UUID, migraciones ejecutadas |
 | Frontend | 🔜 **Pendiente** | Angular 20.x + Material Design |
+
+### 🎉 **Logros Recientes**
+- ✅ **16 rutas API** creadas y funcionando
+- ✅ **5 controladores** con lógica completa
+- ✅ **3 eventos WebSocket** para tiempo real
+- ✅ **Canales broadcasting** configurados
+- ✅ **JWT Authentication** con soporte anónimo
+- ✅ **Base de datos** con UUID y relaciones completas
 
 ---
 
