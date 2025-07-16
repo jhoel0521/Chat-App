@@ -59,14 +59,28 @@ export class LoginComponent {
 
     this.authService.login(this.loginForm).subscribe({
       next: (response) => {
+        console.log('Login response:', response);
         this.isLoading = false;
-        if (response.status === 200) {
-          this.router.navigate(['/dashboard']);
+        
+        // Verificar si la respuesta viene envuelta en ApiResponse o directamente
+        let authResponse: any;
+        
+        if (response.data) {
+          authResponse = response.data;
         } else {
-          this.errorMessage = response.message || 'Error al iniciar sesión';
+          authResponse = response as any;
+        }
+        
+        if (authResponse && authResponse.success) {
+          console.log('Login successful, navigating to dashboard...');
+          // Usar navigateByUrl para navegación absoluta
+          this.router.navigateByUrl('/dashboard');
+        } else {
+          this.errorMessage = authResponse?.message || 'Error al iniciar sesión';
         }
       },
       error: (error) => {
+        console.error('Login error:', error);
         this.isLoading = false;
         this.errorMessage = error.error?.message || 'Error de conexión';
       }
@@ -92,14 +106,27 @@ export class LoginComponent {
 
     this.authService.register(this.registerForm).subscribe({
       next: (response) => {
+        console.log('Register response:', response);
         this.isLoading = false;
-        if (response.status === 200 || response.status === 201) {
-          this.router.navigate(['/dashboard']);
+        // Verificar si la respuesta viene envuelta en ApiResponse o directamente
+        let authResponse: any;
+        
+        if (response.data) {
+          authResponse = response.data;
         } else {
-          this.errorMessage = response.message || 'Error al registrar usuario';
+          authResponse = response as any;
+        }
+        
+        if (authResponse && authResponse.success) {
+          console.log('Registration successful, navigating to dashboard...');
+          // Usar navigateByUrl para navegación absoluta
+          this.router.navigateByUrl('/dashboard');
+        } else {
+          this.errorMessage = authResponse?.message || 'Error al registrar usuario';
         }
       },
       error: (error) => {
+        console.error('Register error:', error);
         this.isLoading = false;
         this.errorMessage = error.error?.message || 'Error de conexión';
       }
@@ -120,14 +147,26 @@ export class LoginComponent {
 
     this.authService.guestInit(this.guestForm).subscribe({
       next: (response) => {
+        console.log('Guest init response:', response);
         this.isLoading = false;
-        if (response.status === 200 || response.status === 201) {
-          this.router.navigate(['/dashboard']);
+        // Verificar si la respuesta viene envuelta en ApiResponse o directamente
+        let authResponse: any;
+        
+        if (response.data) {
+          authResponse = response.data;
         } else {
-          this.errorMessage = response.message || 'Error al iniciar como invitado';
+          authResponse = response as any;
+        }
+        
+        if (authResponse && authResponse.success) {
+          console.log('Guest init successful, navigating to dashboard...');
+          this.router.navigateByUrl('/dashboard');
+        } else {
+          this.errorMessage = authResponse?.message || 'Error al iniciar como invitado';
         }
       },
       error: (error) => {
+        console.error('Guest init error:', error);
         this.isLoading = false;
         this.errorMessage = error.error?.message || 'Error de conexión';
       }

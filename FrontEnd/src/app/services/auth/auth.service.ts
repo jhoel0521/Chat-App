@@ -21,6 +21,15 @@ export interface AuthResponse {
   user: User;
 }
 
+// Interfaz para la respuesta real del backend
+export interface BackendAuthResponse {
+  success: boolean;
+  message: string;
+  user: User;
+  token: string;
+  refresh_token?: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -58,25 +67,66 @@ export class AuthService {
     const token = localStorage.getItem(environment.tokenKey);
     const userStr = localStorage.getItem(environment.userKey);
     
+    console.log('AuthService - Initializing auth state. Token exists:', !!token, 'User data exists:', !!userStr);
+    
     if (token && userStr) {
       try {
         const user = JSON.parse(userStr);
         this.currentUserSubject.next(user);
         this.isLoggedInSubject.next(true);
+        console.log('AuthService - User authenticated on startup:', user.name, 'isLoggedIn set to:', true);
       } catch (error) {
+        console.error('AuthService - Error parsing user data:', error);
         this.clearAuthData();
       }
+    } else {
+      console.log('AuthService - No auth data found, user not authenticated');
+      this.currentUserSubject.next(null);
+      this.isLoggedInSubject.next(false);
     }
+    
+    // Debug: mostrar estado final
+    setTimeout(() => {
+      console.log('AuthService - Final initialization state - isLoggedIn:', this.isLoggedInSubject.value, 'currentUser:', this.currentUserSubject.value?.name || 'null');
+    }, 100);
   }
 
   /**
    * Iniciar sesión con email y password
    */
-  login(credentials: LoginRequest): Observable<ApiResponse<AuthResponse>> {
-    return this.apiService.post<AuthResponse>('login', credentials).pipe(
+  login(credentials: LoginRequest): Observable<ApiResponse<BackendAuthResponse>> {
+    return this.apiService.post<BackendAuthResponse>('login', credentials).pipe(
       tap(response => {
+        console.log('AuthService - Login response:', response);
+        
+        // Verificar si la respuesta viene envuelta en ApiResponse o directamente
+        let authResponse: BackendAuthResponse;
+        
         if (response.data) {
-          this.setAuthData(response.data);
+          // Respuesta envuelta en ApiResponse
+          authResponse = response.data;
+        } else {
+          // Respuesta directa del backend (esto es lo que está pasando)
+          authResponse = response as any;
+        }
+        
+        console.log('AuthService - Processed auth response:', authResponse);
+        
+        if (authResponse && authResponse.success) {
+          console.log('AuthService - Login successful, setting auth data...');
+          
+          // Convertir la respuesta del backend al formato interno
+          const authData: AuthResponse = {
+            access_token: authResponse.token,
+            refresh_token: authResponse.refresh_token,
+            token_type: 'Bearer',
+            expires_in: 3600, // Default 1 hora
+            user: authResponse.user
+          };
+          console.log('AuthService - Auth data to set:', authData);
+          this.setAuthData(authData);
+        } else {
+          console.log('AuthService - Login failed or no success flag');
         }
       })
     );
@@ -85,11 +135,30 @@ export class AuthService {
   /**
    * Registrar nuevo usuario
    */
-  register(userData: RegisterRequest): Observable<ApiResponse<AuthResponse>> {
-    return this.apiService.post<AuthResponse>('register', userData).pipe(
+  register(userData: RegisterRequest): Observable<ApiResponse<BackendAuthResponse>> {
+    return this.apiService.post<BackendAuthResponse>('register', userData).pipe(
       tap(response => {
+        console.log('AuthService - Register response:', response);
+        
+        // Verificar si la respuesta viene envuelta en ApiResponse o directamente
+        let authResponse: BackendAuthResponse;
+        
         if (response.data) {
-          this.setAuthData(response.data);
+          authResponse = response.data;
+        } else {
+          authResponse = response as any;
+        }
+        
+        if (authResponse && authResponse.success) {
+          // Convertir la respuesta del backend al formato interno
+          const authData: AuthResponse = {
+            access_token: authResponse.token,
+            refresh_token: authResponse.refresh_token,
+            token_type: 'Bearer',
+            expires_in: 3600, // Default 1 hora
+            user: authResponse.user
+          };
+          this.setAuthData(authData);
         }
       })
     );
@@ -98,11 +167,30 @@ export class AuthService {
   /**
    * Iniciar sesión como usuario anónimo
    */
-  guestInit(guestData: GuestInitRequest): Observable<ApiResponse<AuthResponse>> {
-    return this.apiService.post<AuthResponse>('guest/init', guestData).pipe(
+  guestInit(guestData: GuestInitRequest): Observable<ApiResponse<BackendAuthResponse>> {
+    return this.apiService.post<BackendAuthResponse>('guest/init', guestData).pipe(
       tap(response => {
+        console.log('AuthService - Guest init response:', response);
+        
+        // Verificar si la respuesta viene envuelta en ApiResponse o directamente
+        let authResponse: BackendAuthResponse;
+        
         if (response.data) {
-          this.setAuthData(response.data);
+          authResponse = response.data;
+        } else {
+          authResponse = response as any;
+        }
+        
+        if (authResponse && authResponse.success) {
+          // Convertir la respuesta del backend al formato interno
+          const authData: AuthResponse = {
+            access_token: authResponse.token,
+            refresh_token: authResponse.refresh_token,
+            token_type: 'Bearer',
+            expires_in: 3600, // Default 1 hora
+            user: authResponse.user
+          };
+          this.setAuthData(authData);
         }
       })
     );
@@ -166,14 +254,17 @@ export class AuthService {
    * Guardar datos de autenticación
    */
   private setAuthData(authResponse: AuthResponse): void {
+    console.log('AuthService - Setting auth data for user:', authResponse.user.name);
     localStorage.setItem(environment.tokenKey, authResponse.access_token);
     if (authResponse.refresh_token) {
       localStorage.setItem(environment.refreshTokenKey, authResponse.refresh_token);
     }
     localStorage.setItem(environment.userKey, JSON.stringify(authResponse.user));
     
+    // Actualizar estado inmediatamente
     this.currentUserSubject.next(authResponse.user);
     this.isLoggedInSubject.next(true);
+    console.log('AuthService - Auth state updated. isLoggedIn:', true, 'User:', authResponse.user.name);
   }
 
   /**
@@ -190,19 +281,42 @@ export class AuthService {
    * Limpiar datos de autenticación
    */
   private clearAuthData(): void {
+    console.log('AuthService - Clearing auth data...');
     localStorage.removeItem(environment.tokenKey);
     localStorage.removeItem(environment.refreshTokenKey);
     localStorage.removeItem(environment.userKey);
     
     this.currentUserSubject.next(null);
     this.isLoggedInSubject.next(false);
+    console.log('AuthService - Auth data cleared. isLoggedIn set to:', false);
   }
 
   /**
    * Verificar si el usuario está autenticado
    */
   isAuthenticated(): boolean {
-    return !!localStorage.getItem(environment.tokenKey);
+    const token = localStorage.getItem(environment.tokenKey);
+    const hasValidToken = !!token;
+    console.log('AuthService - isAuthenticated check. Token exists:', hasValidToken);
+    
+    // Si tenemos token pero el observable no refleja el estado, actualizar
+    if (hasValidToken && !this.isLoggedInSubject.value) {
+      const userStr = localStorage.getItem(environment.userKey);
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          this.currentUserSubject.next(user);
+          this.isLoggedInSubject.next(true);
+          console.log('AuthService - Updated state from token check');
+        } catch (error) {
+          console.error('AuthService - Error parsing user data:', error);
+          this.clearAuthData();
+          return false;
+        }
+      }
+    }
+    
+    return hasValidToken;
   }
 
   /**
