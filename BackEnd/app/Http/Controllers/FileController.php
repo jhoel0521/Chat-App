@@ -74,6 +74,11 @@ class FileController extends Controller
             ], 404);
         }
 
-        return Storage::disk('public')->response($file->file_path, $file->original_name);
+        $filePath = Storage::disk('public')->path($file->file_path);
+        
+        return response()->file($filePath, [
+            'Content-Type' => $file->mime_type,
+            'Content-Disposition' => 'inline; filename="' . $file->original_name . '"'
+        ]);
     }
 }

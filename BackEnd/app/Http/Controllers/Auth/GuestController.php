@@ -52,7 +52,16 @@ class GuestController extends Controller
      */
     public function upgrade(Request $request): JsonResponse
     {
-        $user = auth('api')->user();
+        $userId = auth('api')->id();
+        $user = User::find($userId);
+
+        // Verificar que el usuario existe
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        }
 
         // Verificar que es un usuario anónimo
         if (!$user->is_anonymous) {

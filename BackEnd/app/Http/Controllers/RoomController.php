@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\User;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -93,7 +94,15 @@ class RoomController extends Controller
      */
     public function join(Request $request, Room $room): JsonResponse
     {
-        $user = auth('api')->user();
+        $userId = auth('api')->id();
+        $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        }
 
         // Verificar si ya está en la sala
         if ($room->hasUser($user->id)) {
@@ -130,7 +139,15 @@ class RoomController extends Controller
      */
     public function leave(Request $request, Room $room): JsonResponse
     {
-        $user = auth('api')->user();
+        $userId = auth('api')->id();
+        $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        }
 
         // Verificar si está en la sala
         if (!$room->hasUser($user->id)) {

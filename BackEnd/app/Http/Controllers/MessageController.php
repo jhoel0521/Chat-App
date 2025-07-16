@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\User;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -43,7 +44,15 @@ class MessageController extends Controller
      */
     public function store(Request $request, Room $room): JsonResponse
     {
-        $user = auth('api')->user();
+        $userId = auth('api')->id();
+        $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        }
 
         // Verificar acceso a la sala
         if ($room->is_private && !$room->hasUser($user->id)) {
