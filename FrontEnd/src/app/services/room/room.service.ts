@@ -16,6 +16,11 @@ export interface Room {
   last_activity?: string;
 }
 
+export interface RoomsResponse {
+  success: boolean;
+  rooms: Room[];
+}
+
 export interface CreateRoomRequest {
   name: string;
   description?: string;
@@ -37,8 +42,8 @@ export class RoomService {
   /**
    * Obtener lista de salas públicas
    */
-  getRooms(): Observable<ApiResponse<Room[]>> {
-    return this.apiService.get<Room[]>('rooms');
+  getRooms(): Observable<ApiResponse<RoomsResponse>> {
+    return this.apiService.get<RoomsResponse>('rooms');
   }
 
   /**

@@ -14,14 +14,19 @@ use App\Events\UserLeftRoom;
 class RoomController extends Controller
 {
     /**
-     * Listar salas públicas disponibles
+     * Listar salas públicas disponibles (las 10 más populares)
      */
     public function index(): JsonResponse
     {
-        $rooms = Room::with(['creator:id,name', 'users'])
+        $rooms = Room::with(['creator:id,name'])
             ->where('is_private', false)
-            ->withCount('users')
-            ->latest()
+            ->withCount(['users' => function($query) {
+                // Solo contar usuarios que no han abandonado la sala
+                $query->whereNull('abandonment_in');
+            }])
+            ->orderBy('users_count', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
             ->get();
 
         return response()->json([

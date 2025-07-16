@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService, User } from '../../services/auth/auth.service';
-import { RoomService, Room } from '../../services/room/room.service';
+import { RoomService, Room, RoomsResponse } from '../../services/room/room.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -40,17 +40,20 @@ export class DashboardComponent implements OnInit {
    */
   loadPopularRooms(): void {
     this.isLoadingRooms = true;
+    this.errorMessage = '';
+    
     this.roomService.getRooms().subscribe({
       next: (response) => {
         this.isLoadingRooms = false;
-        if (response.data) {
-          // Simular datos de popularidad (esto vendría del backend)
-          this.popularRooms = response.data.slice(0, 10).map((room, index) => ({
-            ...room,
-            users_count: Math.floor(Math.random() * 50) + 1,
-            messages_count: Math.floor(Math.random() * 1000) + 10,
-            last_activity: new Date(Date.now() - Math.random() * 86400000).toISOString()
-          }));
+        
+        // El backend devuelve { success: true, rooms: [...] }
+        if (response.data && response.data.rooms) {
+          this.popularRooms = response.data.rooms;
+        } else if ((response as any).rooms) {
+          // Si la respuesta viene directamente sin ApiResponse wrapper
+          this.popularRooms = (response as any).rooms;
+        } else {
+          this.popularRooms = [];
         }
       },
       error: (error) => {

@@ -24,23 +24,45 @@ function handle401Error(req: any, next: any): Observable<any> {
     isRefreshing = true;
     refreshTokenSubject.next(null);
 
-    // Como el backend actual no soporta refresh tokens, intentamos con el token actual
-    // Si existe un endpoint de refresh en el futuro, se puede usar aquí
     const currentToken = localStorage.getItem(environment.tokenKey);
     
     if (currentToken) {
-      // Por ahora, como no hay refresh endpoint, directamente limpiamos y redirigimos
-      // En el futuro se puede implementar la llamada al refresh endpoint aquí
-      isRefreshing = false;
+      const http = inject(HttpClient);
       
-      // Limpiar datos de autenticación
-      localStorage.removeItem(environment.tokenKey);
-      localStorage.removeItem(environment.userKey);
-      
-      // Redirigir a login
-      window.location.href = '/login';
-      
-      return throwError(() => new Error('Token expired, please login again'));
+      // Intentar refrescar el token usando el endpoint disponible
+      return http.post<any>(`${environment.apiUrl}/token/refresh`, {}, {
+        headers: {
+          'Authorization': `Bearer ${currentToken}`,
+          'Content-Type': 'application/json'
+        }
+      }).pipe(
+        switchMap((response: any) => {
+          isRefreshing = false;
+          
+          // Extraer el nuevo token de la respuesta (el backend devuelve { success: true, token: "..." })
+          const newToken = response.token;
+          refreshTokenSubject.next(newToken);
+          
+          // Guardar nuevo token
+          localStorage.setItem(environment.tokenKey, newToken);
+          
+          // Reintentar la request original con el nuevo token
+          return next(addTokenToRequest(req, newToken));
+        }),
+        catchError((err) => {
+          isRefreshing = false;
+          refreshTokenSubject.next(null);
+          
+          // Si el refresh falla, limpiar localStorage y redirigir a login
+          localStorage.removeItem(environment.tokenKey);
+          localStorage.removeItem(environment.userKey);
+          
+          // Redirigir a login
+          window.location.href = '/login';
+          
+          return throwError(() => new Error('Token expired, please login again'));
+        })
+      );
     } else {
       isRefreshing = false;
       
