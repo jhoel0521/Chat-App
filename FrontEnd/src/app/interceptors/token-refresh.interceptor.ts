@@ -24,43 +24,43 @@ function handle401Error(req: any, next: any): Observable<any> {
     isRefreshing = true;
     refreshTokenSubject.next(null);
 
-    const refreshToken = localStorage.getItem(environment.refreshTokenKey);
+    // Como el backend actual no soporta refresh tokens, intentamos con el token actual
+    // Si existe un endpoint de refresh en el futuro, se puede usar aquí
+    const currentToken = localStorage.getItem(environment.tokenKey);
     
-    if (refreshToken) {
-      const http = inject(HttpClient);
+    if (currentToken) {
+      // Por ahora, como no hay refresh endpoint, directamente limpiamos y redirigimos
+      // En el futuro se puede implementar la llamada al refresh endpoint aquí
+      isRefreshing = false;
       
-      // Hacer request para refresh token
-      return http.post<any>(`${environment.apiUrl}/token/refresh`, {
-        refresh_token: refreshToken
-      }).pipe(
-        switchMap((token: any) => {
-          isRefreshing = false;
-          refreshTokenSubject.next(token.access_token);
-          
-          // Guardar nuevo token
-          localStorage.setItem(environment.tokenKey, token.access_token);
-          
-          // Reintentar la request original con el nuevo token
-          return next(addTokenToRequest(req, token.access_token));
-        }),
-        catchError((err) => {
-          isRefreshing = false;
-          
-          // Si el refresh falla, limpiar localStorage y redirigir a login
-          localStorage.removeItem(environment.tokenKey);
-          localStorage.removeItem(environment.refreshTokenKey);
-          localStorage.removeItem(environment.userKey);
-          
-          // Aquí podrías redirigir a login usando Router
-          // window.location.href = '/login';
-          
-          return throwError(() => err);
-        })
-      );
+      // Limpiar datos de autenticación
+      localStorage.removeItem(environment.tokenKey);
+      localStorage.removeItem(environment.userKey);
+      
+      // Redirigir a login
+      window.location.href = '/login';
+      
+      return throwError(() => new Error('Token expired, please login again'));
+    } else {
+      isRefreshing = false;
+      
+      // No hay token, redirigir directamente
+      window.location.href = '/login';
+      return throwError(() => new Error('No token available, please login'));
     }
   }
   
-  return throwError(() => new Error('No refresh token available'));
+  // Si ya se está refrescando, esperar
+  return refreshTokenSubject.pipe(
+    switchMap(token => {
+      if (token) {
+        return next(addTokenToRequest(req, token));
+      } else {
+        window.location.href = '/login';
+        return throwError(() => new Error('Token refresh failed'));
+      }
+    })
+  );
 }
 
 function addTokenToRequest(request: any, token: string) {
@@ -72,6 +72,6 @@ function addTokenToRequest(request: any, token: string) {
 }
 
 function isAuthRoute(url: string): boolean {
-  const authRoutes = ['/login', '/register', '/guest/init', '/token/refresh'];
+  const authRoutes = ['/login', '/register', '/guest/init'];
   return authRoutes.some(route => url.includes(route));
 }

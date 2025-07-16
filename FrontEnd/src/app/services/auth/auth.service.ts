@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import { ApiService, ApiResponse } from '../api';
 import { environment } from '../../../environments/environment';
 
@@ -56,7 +57,7 @@ export class AuthService {
   private isLoggedInSubject = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this.isLoggedInSubject.asObservable();
 
-  constructor(private apiService: ApiService) {
+  constructor(private apiService: ApiService, private http: HttpClient) {
     this.initializeAuthState();
   }
 
@@ -223,14 +224,27 @@ export class AuthService {
   /**
    * Renovar token JWT
    */
-  refreshToken(): Observable<ApiResponse<AuthResponse>> {
-    const refreshToken = localStorage.getItem(environment.refreshTokenKey);
-    return this.apiService.post<AuthResponse>('token/refresh', { 
-      refresh_token: refreshToken 
+  refreshToken(): Observable<any> {
+    const accessToken = localStorage.getItem(environment.tokenKey);
+    
+    return this.http.post(`${environment.apiUrl}/refresh`, {}, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
     }).pipe(
-      tap(response => {
-        if (response.data) {
-          this.updateTokens(response.data);
+      tap((response: any) => {
+        console.log('Refresh token response:', response);
+        
+        // Extraer el nuevo token
+        let newToken = '';
+        if (response?.token) {
+          newToken = response.token;
+        } else if (response?.data?.token) {
+          newToken = response.data.token;
+        }
+        
+        if (newToken) {
+          localStorage.setItem(environment.tokenKey, newToken);
         }
       })
     );

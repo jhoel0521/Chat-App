@@ -30,7 +30,7 @@ class Room extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'room_user')
-                    ->withTimestamps();
+                    ->withPivot(['joined_at', 'abandonment_in']);
     }
 
     /**

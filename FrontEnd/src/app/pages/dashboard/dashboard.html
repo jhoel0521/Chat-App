@@ -56,7 +56,11 @@
               Explora las salas de chat más populares y únete a las conversaciones.
             </span>
           </p>
-          <button class="btn btn-accent">Crear Nueva Sala</button>
+          <button 
+            class="btn btn-primary"
+            (click)="createRoom()">
+            ➕ Crear Nueva Sala
+          </button>
         </div>
       </div>
     </div>
@@ -180,7 +184,13 @@
               </div>
 
               <!-- Join Button -->
-              <div class="card-actions justify-end mt-4">
+              <div class="card-actions justify-between mt-4">
+                <button 
+                  class="btn btn-outline btn-sm"
+                  (click)="editRoom(room); $event.stopPropagation()"
+                  title="Editar sala">
+                  ✏️ Editar
+                </button>
                 <button class="btn btn-primary btn-sm">
                   🚀 Unirse
                 </button>
@@ -195,7 +205,11 @@
           <div class="text-6xl mb-4">🤷‍♂️</div>
           <h3 class="text-xl font-bold mb-2">No hay salas disponibles</h3>
           <p class="text-base-content/70 mb-4">Sé el primero en crear una sala de chat</p>
-          <button class="btn btn-primary">Crear Primera Sala</button>
+          <button 
+            class="btn btn-primary"
+            (click)="createRoom()">
+            ➕ Crear Primera Sala
+          </button>
         </div>
       </div>
     </div>

@@ -72,8 +72,7 @@ class User extends Authenticatable implements JWTSubject
     public function rooms()
     {
         return $this->belongsToMany(Room::class, 'room_user')
-                    ->withPivot('joined_at', 'abandonment_in')
-                    ->withTimestamps();
+                    ->withPivot(['joined_at', 'abandonment_in']);
     }
 
     public function messages()

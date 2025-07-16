@@ -56,6 +56,13 @@ export class RoomService {
   }
 
   /**
+   * Actualizar una sala existente
+   */
+  updateRoom(roomId: string, roomData: Partial<CreateRoomRequest>): Observable<ApiResponse<Room>> {
+    return this.apiService.put<Room>(`rooms/${roomId}`, roomData);
+  }
+
+  /**
    * Unirse a una sala
    */
   joinRoom(roomId: string, joinData?: JoinRoomRequest): Observable<ApiResponse<any>> {

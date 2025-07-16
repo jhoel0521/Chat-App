@@ -7,9 +7,15 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const excludedRoutes = environment.excludedAuthRoutes;
   
   // Verificar si la ruta actual está excluida
-  const isExcludedRoute = excludedRoutes.some(route => 
-    req.url.includes(route)
-  );
+  // Para /rooms, solo excluir GET requests (lectura pública)
+  const isExcludedRoute = excludedRoutes.some(route => {
+    if (route === '/rooms') {
+      // Solo excluir GET requests a /rooms (listado público)
+      return req.url.includes(route) && req.method === 'GET';
+    }
+    // Para otras rutas, usar la lógica original
+    return req.url.includes(route);
+  });
   
   // Obtener token del localStorage solo si no es una ruta excluida
   const token = !isExcludedRoute ? localStorage.getItem(environment.tokenKey) : null;

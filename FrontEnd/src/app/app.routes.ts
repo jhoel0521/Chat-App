@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login';
 import { DashboardComponent } from './pages/dashboard/dashboard';
+import { CreateRoomComponent } from './pages/rooms/create-room';
+import { EditRoomComponent } from './pages/rooms/edit-room';
 import { authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -13,6 +15,16 @@ export const routes: Routes = [
   { 
     path: 'dashboard', 
     component: DashboardComponent,
+    canActivate: [authGuard]
+  },
+  { 
+    path: 'rooms/create', 
+    component: CreateRoomComponent,
+    canActivate: [authGuard]
+  },
+  { 
+    path: 'rooms/edit/:id', 
+    component: EditRoomComponent,
     canActivate: [authGuard]
   },
   { path: '**', redirectTo: '/login' } // Wildcard route

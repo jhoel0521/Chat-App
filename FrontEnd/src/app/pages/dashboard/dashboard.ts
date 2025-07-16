@@ -65,17 +65,33 @@ export class DashboardComponent implements OnInit {
    * Unirse a una sala
    */
   joinRoom(room: Room): void {
+    console.log('Joining room:', room.name);
     this.roomService.joinRoom(room.id).subscribe({
       next: (response) => {
         // Redirigir a la sala o mostrar mensaje de éxito
         console.log('Joined room successfully:', response);
+        // TODO: Implementar navegación a la sala de chat
         // this.router.navigate(['/chat', room.id]);
       },
       error: (error) => {
         console.error('Error joining room:', error);
-        // Mostrar error
+        // TODO: Mostrar mensaje de error al usuario
       }
     });
+  }
+
+  /**
+   * Navegar a crear nueva sala
+   */
+  createRoom(): void {
+    this.router.navigate(['/rooms/create']);
+  }
+
+  /**
+   * Navegar a editar sala
+   */
+  editRoom(room: Room): void {
+    this.router.navigate(['/rooms/edit', room.id]);
   }
 
   /**
