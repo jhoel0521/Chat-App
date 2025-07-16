@@ -21,25 +21,45 @@ Esta aplicación es una plataforma de **chat en tiempo real** desarrollada como 
 
 ## 🛠️ Tecnologías utilizadas
 
-| Componente        | Tecnología                  |
-|-------------------|-----------------------------|
-| Backend           | Laravel 12.x (PHP 8.4)       |
-| Base de datos     | MariaDB 10.x                |
-| Realtime          | Laravel WebSockets (`beyondcode/laravel-websockets`) |
-| Frontend          | Angular 20.x                |
-| Comunicación      | API REST y WebSocket        |
+| Componente    | Tecnología                                           |
+| ------------- | ---------------------------------------------------- |
+| Backend       | Laravel 12.x (PHP 8.4)                               |
+| Base de datos | MariaDB 10.x                                         |
+| Realtime      | Laravel WebSockets (`beyondcode/laravel-websockets`) |
+| Frontend      | Angular 20.x                                         |
+| Comunicación  | API REST y WebSocket                                 |
 
 ---
 
-## 🗃️ Diagrama de Base de Datos
+## 🗃️ Modelo de Base de Datos
 
-Este es el modelo de base de datos utilizado para estructurar las entidades principales del sistema:
+### 📊 Diagrama Entidad-Relación
 
-![Modelo de datos](https://dbdiagram.io/d/Chat-67801be46b7fa355c36ede4b)
+El sistema utiliza un modelo relacional optimizado para manejar salas de chat en tiempo real con soporte para usuarios anónimos y registrados.
 
-> Puedes editar este modelo en: https://dbdiagram.io
+**🔗 [Ver diagrama interactivo en DBDiagram.io](https://dbdiagram.io/d/Chat-67801be46b7fa355c36ede4b)**
+
+### 📋 Entidades principales
+
+| Tabla | Descripción | Campos clave |
+|-------|-------------|--------------|
+| `users` | Usuarios del sistema (anónimos y registrados) | `id`, `name`, `email`, `is_anonymous` |
+| `rooms` | Salas de chat públicas y privadas | `id`, `name`, `is_private`, `allow_anonymous` |
+| `room_user` | Relación usuarios-salas con historial | `room_id`, `user_id`, `joined_at`, `abandonment_in` |
+| `messages` | Mensajes de todas las salas | `id`, `room_id`, `user_id`, `type`, `content` |
+| `files` | Archivos multimedia compartidos | `id`, `user_id`, `path`, `original_name` |
+
+### 🔑 Características del modelo
+
+- **UUID como clave primaria**: Para usuarios y salas, garantizando unicidad global
+- **Soporte multimodal**: Mensajes de texto, imágenes, audio, video y documentos
+- **Historial completo**: Registro de entrada/salida de usuarios en salas
+- **Flexibilidad de usuarios**: Mismo modelo para anónimos y registrados
+- **Mensajes del sistema**: Para notificaciones automáticas (unirse/abandonar)
+
 <details>
-<summary>🧩 Estructura DBML</summary>
+<summary>🧩 Código DBML completo</summary>
+
 ```dbml
 Table users {
   id uuid [pk]
@@ -92,10 +112,13 @@ Table files {
 }
 ```
 </details>
-🔄 Diagramas de proceso
-A continuación se detallan los 6 flujos principales de uso, modelados con diagramas de secuencia para representar cómo interactúan los componentes del sistema.
+---
 
-1️⃣ Crear cuenta
+## 🔄 Diagramas de Flujo del Sistema
+
+A continuación se detallan los **6 flujos principales** del sistema, modelados con diagramas de secuencia para mostrar cómo interactúan los componentes en tiempo real.
+
+### 1️⃣ Crear cuenta de usuario
 ```mermaid
 sequenceDiagram
     participant Usuario
@@ -115,7 +138,7 @@ sequenceDiagram
         Frontend (Angular)->>Usuario: Muestra mensaje de error
     end
 ```
-2️⃣ Usuario anónimo elige nombre temporal
+### 2️⃣ Usuario anónimo elige nombre temporal
 ```mermaid
 sequenceDiagram
     participant Usuario
@@ -128,7 +151,7 @@ sequenceDiagram
     Frontend->>LocalStorage: Guarda UUID + nombre temporal
     Frontend->>Usuario: Interfaz lista para unirse a salas
 ```
-3️⃣ Usuario crea una sala
+### 3️⃣ Usuario crea una sala
 
 ```mermaid
 
@@ -147,7 +170,7 @@ sequenceDiagram
     Frontend->>Usuario Registrado: Redirige a sala
 ```
 
-4️⃣ Chatear normalmente en una sala
+### 4️⃣ Chatear normalmente en una sala
 
 ```mermaid
 sequenceDiagram
@@ -163,7 +186,7 @@ sequenceDiagram
     Frontend-->>Usuarios en sala: Renderiza mensaje
 
 ```
-5️⃣ Usuario anónimo se registra y conserva sus mensajes
+### 5️⃣ Usuario anónimo se registra y conserva sus mensajes
 ```mermaid
 sequenceDiagram
     participant Usuario Anónimo
@@ -178,7 +201,7 @@ sequenceDiagram
     Frontend->>Usuario: Bienvenido, tus mensajes se conservaron
 
 ```
-6️⃣ Usuario abandona sala o pierde sesión
+### 6️⃣ Usuario abandona sala o pierde sesión
 ```mermaid
 sequenceDiagram
     participant Usuario Anónimo
@@ -201,25 +224,31 @@ sequenceDiagram
     API->>DB: Marca `abandonment_in = NOW()`
     API->>DB: Inserta mensaje system
     WebSocket Server-->>Sala: Emitir mensaje system
-```
-🎯 Objetivos del sistema
-✅ Fomentar el uso de tecnologías modernas
+---
 
-✅ Desarrollar un sistema multicomponente escalable
+## 🎯 Objetivos del Sistema
 
-✅ Implementar comunicación en tiempo real (WebSocket)
+| Objetivo | Estado | Descripción |
+|----------|---------|-------------|
+| ✅ **Tecnologías modernas** | Logrado | Laravel 12, Angular 20, WebSockets, MariaDB |
+| ✅ **Sistema escalable** | Logrado | Arquitectura multicomponente con API REST |
+| ✅ **Tiempo real** | Planificado | Comunicación WebSocket bidireccional |
+| ✅ **Sin registro forzado** | Logrado | Soporte completo para usuarios anónimos |
+| ✅ **Base para futuras mejoras** | Logrado | Reacciones, emojis, notificaciones, etc. |
 
-✅ Permitir el uso del sistema sin forzar el registro
+---
 
-✅ Ofrecer una base sólida para futuras mejoras (reacciones, emojis, notificaciones, etc.)
+## 📌 Estado del proyecto
 
-📌 Estado del proyecto
-Componente	Estado
-Modelo de datos	✅ Finalizado
-Diagramas UML	✅ Hecho
-Backend API	🔜 En desarrollo
-WebSocket	🔜 En desarrollo
-Frontend	🔜 En desarrollo
+| Componente | Estado | Descripción |
+|------------|--------|-------------|
+| Modelo de datos | ✅ **Finalizado** | Diagrama ER y estructura DBML completa |
+| Diagramas UML | ✅ **Completado** | 6 diagramas de secuencia documentados |
+| Backend API | 🔜 **En desarrollo** | Laravel + MariaDB + API REST |
+| WebSocket | 🔜 **En desarrollo** | Comunicación en tiempo real |
+| Frontend | 🔜 **Pendiente** | Angular 20.x + Material Design |
+
+---
 
 💬 Créditos
 Este proyecto fue desarrollado por Jhoel Cruz, estudiante de la Universidad Privada Domingo Savio (UPDS), como parte del curso de Programación Web II, con fines educativos y de aprendizaje profesional.
