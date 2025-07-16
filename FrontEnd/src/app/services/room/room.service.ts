@@ -7,13 +7,17 @@ export interface Room {
   name: string;
   description?: string;
   is_private: boolean;
-  allow_anonymous: boolean;
+  allow_anonymous?: boolean;
   created_by: string;
   created_at: string;
   updated_at: string;
   users_count?: number;
   messages_count?: number;
   last_activity?: string;
+  creator?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface RoomsResponse {

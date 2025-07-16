@@ -47,11 +47,9 @@ export class DashboardComponent implements OnInit {
         this.isLoadingRooms = false;
         
         // El backend devuelve { success: true, rooms: [...] }
+        // que viene envuelto en ApiResponse
         if (response.data && response.data.rooms) {
           this.popularRooms = response.data.rooms;
-        } else if ((response as any).rooms) {
-          // Si la respuesta viene directamente sin ApiResponse wrapper
-          this.popularRooms = (response as any).rooms;
         } else {
           this.popularRooms = [];
         }

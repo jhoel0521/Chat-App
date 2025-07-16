@@ -200,7 +200,7 @@ export class EditRoomComponent implements OnInit {
         name: this.currentRoom.name,
         description: this.currentRoom.description || '',
         is_private: this.currentRoom.is_private,
-        allow_anonymous: this.currentRoom.allow_anonymous
+        allow_anonymous: this.currentRoom.allow_anonymous || false
       };
     }
     this.errorMessage = '';
