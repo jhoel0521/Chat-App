@@ -26,7 +26,7 @@ Esta aplicación es una plataforma de **chat en tiempo real** desarrollada como 
 | Backend       | Laravel 12.x (PHP 8.4)                               |
 | Base de datos | MariaDB 10.x                                         |
 | Realtime      | Laravel Broadcasting + Reverb WebSockets            |
-| Frontend      | Angular 20.x                                         |
+| Frontend      | Angular 20.x + DaisyUI + Tailwind CSS               |
 | Comunicación  | API REST y WebSocket Broadcasting                   |
 
 ---
@@ -343,7 +343,7 @@ echo.private(`room.${roomId}`)
 | WebSocket | ✅ **Completado** | 3 eventos en tiempo real con Laravel Reverb |
 | Autenticación | ✅ **Completado** | JWT Auth + usuarios anónimos + upgrade |
 | Base de datos | ✅ **Completado** | 5 tablas con UUID, migraciones ejecutadas |
-| Frontend | 🔜 **Pendiente** | Angular 20.x + Material Design |
+| Frontend | � **En Desarrollo** | Angular 20.x + DaisyUI + Tailwind CSS |
 
 ### 🎉 **Logros Recientes**
 - ✅ **16 rutas API** creadas y funcionando
