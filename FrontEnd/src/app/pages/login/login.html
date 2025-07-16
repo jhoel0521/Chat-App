@@ -1,0 +1,149 @@
+<div class="min-h-screen hero bg-base-200">
+    <div class="hero-content flex-col lg:flex-row-reverse">
+        <!-- Información de la app -->
+        <div class="text-center lg:text-left lg:ml-8">
+            <h1 class="text-5xl font-bold">Chat App 💬</h1>
+            <p class="py-6 text-lg">
+                Únete a salas de chat en tiempo real. Chatea con usuarios registrados o como invitado.
+                <span class="badge badge-primary">Laravel + Angular</span>
+            </p>
+            <div class="stats stats-vertical lg:stats-horizontal shadow">
+                <div class="stat">
+                    <div class="stat-title">Tecnologías</div>
+                    <div class="stat-value text-2xl">Angular 20</div>
+                    <div class="stat-desc">Frontend moderno</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Backend</div>
+                    <div class="stat-value text-2xl">Laravel 12</div>
+                    <div class="stat-desc">API REST + WebSockets</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formularios de autenticación -->
+        <div class="card w-full max-w-md shadow-2xl bg-base-100">
+            <div class="card-body">
+                <!-- Tabs -->
+                <div class="tabs tabs-boxed mb-6">
+                    <button class="tab" [class.tab-active]="currentTab === 'login'" (click)="setTab('login')">
+                        Iniciar Sesión
+                    </button>
+                    <button class="tab" [class.tab-active]="currentTab === 'register'" (click)="setTab('register')">
+                        Registrarse
+                    </button>
+                    <button class="tab" [class.tab-active]="currentTab === 'guest'" (click)="setTab('guest')">
+                        Como Invitado
+                    </button>
+                </div>
+
+                <!-- Error Alert -->
+                <div *ngIf="errorMessage" class="alert alert-error mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{{ errorMessage }}</span>
+                </div>
+
+                <!-- Login Form -->
+                <form *ngIf="currentTab === 'login'" (ngSubmit)="onLogin()" class="space-y-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Email</span>
+                        </label>
+                        <input type="email" placeholder="tu-email@ejemplo.com" class="input input-bordered"
+                            [(ngModel)]="loginForm.email" name="email" required />
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Contraseña</span>
+                        </label>
+                        <input type="password" placeholder="••••••••" class="input input-bordered"
+                            [(ngModel)]="loginForm.password" name="password" required />
+                    </div>
+                    <div class="form-control mt-6">
+                        <button type="submit" class="btn btn-primary" [class.loading]="isLoading"
+                            [disabled]="isLoading">
+                            <span *ngIf="!isLoading">Iniciar Sesión</span>
+                            <span *ngIf="isLoading">Cargando...</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Register Form -->
+                <form *ngIf="currentTab === 'register'" (ngSubmit)="onRegister()" class="space-y-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Nombre</span>
+                        </label>
+                        <input type="text" placeholder="Tu nombre completo" class="input input-bordered"
+                            [(ngModel)]="registerForm.name" name="name" required />
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Email</span>
+                        </label>
+                        <input type="email" placeholder="tu-email@ejemplo.com" class="input input-bordered"
+                            [(ngModel)]="registerForm.email" name="email" required />
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Contraseña</span>
+                        </label>
+                        <input type="password" placeholder="••••••••" class="input input-bordered"
+                            [(ngModel)]="registerForm.password" name="password" required />
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Confirmar Contraseña</span>
+                        </label>
+                        <input type="password" placeholder="••••••••" class="input input-bordered"
+                            [(ngModel)]="registerForm.password_confirmation" name="password_confirmation" required />
+                    </div>
+                    <div class="form-control mt-6">
+                        <button type="submit" class="btn btn-secondary" [class.loading]="isLoading"
+                            [disabled]="isLoading">
+                            <span *ngIf="!isLoading">Crear Cuenta</span>
+                            <span *ngIf="isLoading">Creando...</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Guest Form -->
+                <form *ngIf="currentTab === 'guest'" (ngSubmit)="onGuestInit()" class="space-y-4">
+                    <div class="alert alert-info">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            class="stroke-current shrink-0 w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Como invitado puedes chatear temporalmente. Podrás registrarte después sin perder tus
+                            mensajes.</span>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Nombre de Invitado</span>
+                        </label>
+                        <input type="text" placeholder="Ej: Invitado123" class="input input-bordered"
+                            [(ngModel)]="guestForm.name" name="guestName" required />
+                    </div>
+                    <div class="form-control mt-6">
+                        <button type="submit" class="btn btn-accent" [class.loading]="isLoading" [disabled]="isLoading">
+                            <span *ngIf="!isLoading">🚀 Entrar como Invitado</span>
+                            <span *ngIf="isLoading">Entrando...</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Footer -->
+                <div class="divider">Proyecto Universitario</div>
+                <div class="text-center text-sm opacity-70">
+                    <p>Desarrollado por <strong>Jhoel Cruz</strong></p>
+                    <p>UPDS - Programación Web II</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

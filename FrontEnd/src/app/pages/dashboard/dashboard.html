@@ -1,0 +1,203 @@
+<div class="min-h-screen bg-base-100">
+  <!-- Header/Navbar -->
+  <div class="navbar bg-base-100 shadow-lg">
+    <div class="navbar-start">
+      <h1 class="text-xl font-bold">💬 Chat App</h1>
+    </div>
+    <div class="navbar-center">
+      <div class="breadcrumbs text-sm">
+        <ul>
+          <li><a>Inicio</a></li>
+          <li>Dashboard</li>
+        </ul>
+      </div>
+    </div>
+    <div class="navbar-end">
+      <!-- User Info -->
+      <div *ngIf="currentUser" class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+          <div class="w-10 rounded-full">
+            <div class="bg-neutral text-neutral-content rounded-full w-10 h-10 flex items-center justify-center">
+              {{ currentUser.name.charAt(0).toUpperCase() }}
+            </div>
+          </div>
+        </div>
+        <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+          <li class="menu-title">
+            <span>{{ currentUser.name }}</span>
+            <span *ngIf="currentUser.is_anonymous" class="badge badge-warning badge-xs">Invitado</span>
+            <span *ngIf="!currentUser.is_anonymous" class="badge badge-success badge-xs">Registrado</span>
+          </li>
+          <li><a>Perfil</a></li>
+          <li><a>Configuración</a></li>
+          <li><a (click)="logout()">Cerrar Sesión</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 py-8">
+    
+    <!-- Welcome Section -->
+    <div class="hero bg-gradient-to-r from-primary to-secondary text-primary-content rounded-box mb-8">
+      <div class="hero-content text-center">
+        <div class="max-w-md">
+          <h1 class="mb-5 text-5xl font-bold">
+            ¡Bienvenido<span *ngIf="currentUser?.is_anonymous"> Invitado</span>!
+          </h1>
+          <p class="mb-5">
+            <span *ngIf="currentUser?.is_anonymous">
+              Estás navegando como <strong>{{ currentUser?.name }}</strong>. 
+              Puedes chatear libremente y registrarte más tarde sin perder tus mensajes.
+            </span>
+            <span *ngIf="!currentUser?.is_anonymous">
+              ¡Hola <strong>{{ currentUser?.name }}</strong>! 
+              Explora las salas de chat más populares y únete a las conversaciones.
+            </span>
+          </p>
+          <button class="btn btn-accent">Crear Nueva Sala</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats shadow w-full mb-8">
+      <div class="stat">
+        <div class="stat-figure text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Salas Activas</div>
+        <div class="stat-value text-primary">{{ popularRooms.length }}</div>
+        <div class="stat-desc">Salas públicas disponibles</div>
+      </div>
+      
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Total Usuarios</div>
+        <div class="stat-value text-secondary">
+          {{ getTotalUsers() }}
+        </div>
+        <div class="stat-desc">Usuarios conectados</div>
+      </div>
+      
+      <div class="stat">
+        <div class="stat-figure text-accent">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Mensajes</div>
+        <div class="stat-value text-accent">
+          {{ getTotalMessages() }}
+        </div>
+        <div class="stat-desc">Mensajes enviados hoy</div>
+      </div>
+    </div>
+
+    <!-- Popular Rooms Section -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="card-title text-2xl">
+            🔥 Salas Más Populares
+            <div class="badge badge-secondary">TOP 10</div>
+          </h2>
+          <button 
+            class="btn btn-outline btn-sm"
+            (click)="refreshRooms()"
+            [class.loading]="isLoadingRooms">
+            <svg *ngIf="!isLoadingRooms" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="w-4 h-4 stroke-current">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Actualizar
+          </button>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoadingRooms" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div *ngFor="let i of [1,2,3,4,5,6]" class="card bg-base-200 animate-pulse">
+            <div class="card-body">
+              <div class="h-4 bg-base-300 rounded w-3/4 mb-2"></div>
+              <div class="h-3 bg-base-300 rounded w-1/2 mb-4"></div>
+              <div class="flex space-x-2">
+                <div class="h-6 bg-base-300 rounded w-16"></div>
+                <div class="h-6 bg-base-300 rounded w-16"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="errorMessage && !isLoadingRooms" class="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{{ errorMessage }}</span>
+          <button class="btn btn-sm" (click)="refreshRooms()">Reintentar</button>
+        </div>
+
+        <!-- Rooms Grid -->
+        <div *ngIf="!isLoadingRooms && !errorMessage" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div *ngFor="let room of popularRooms; let i = index" 
+               class="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer border hover:border-primary"
+               (click)="joinRoom(room)">
+            <div class="card-body p-4">
+              <!-- Room Header -->
+              <div class="flex justify-between items-start mb-3">
+                <h3 class="card-title text-lg">{{ room.name }}</h3>
+                <div class="badge badge-outline badge-sm">
+                  {{ room.is_private ? '🔒 Privada' : '🌍 Pública' }}
+                </div>
+              </div>
+
+              <!-- Room Description -->
+              <p class="text-sm text-base-content/70 mb-4 line-clamp-2">
+                {{ room.description || 'Una sala de chat activa y divertida. ¡Únete a la conversación!' }}
+              </p>
+
+              <!-- Room Stats -->
+              <div class="flex justify-between items-center text-sm">
+                <div class="flex space-x-4">
+                  <div class="flex items-center space-x-1">
+                    <span class="text-success">●</span>
+                    <span>{{ room.users_count }} usuarios</span>
+                  </div>
+                  <div class="flex items-center space-x-1">
+                    <span>💬</span>
+                    <span>{{ room.messages_count }}</span>
+                  </div>
+                </div>
+                <div class="text-xs opacity-60">
+                  {{ getTimeAgo(room.last_activity || room.updated_at) }}
+                </div>
+              </div>
+
+              <!-- Join Button -->
+              <div class="card-actions justify-end mt-4">
+                <button class="btn btn-primary btn-sm">
+                  🚀 Unirse
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!isLoadingRooms && !errorMessage && popularRooms.length === 0" 
+             class="text-center py-12">
+          <div class="text-6xl mb-4">🤷‍♂️</div>
+          <h3 class="text-xl font-bold mb-2">No hay salas disponibles</h3>
+          <p class="text-base-content/70 mb-4">Sé el primero en crear una sala de chat</p>
+          <button class="btn btn-primary">Crear Primera Sala</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
