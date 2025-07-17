@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService, User } from '../../services/auth/auth.service';
 import { RoomService, Room, RoomsResponse } from '../../services/room/room.service';
+import { RoomCardComponent } from '../../components/room-card/room-card.component';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule],
+  imports: [CommonModule, RoomCardComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -46,6 +47,7 @@ export class DashboardComponent implements OnInit {
     this.roomService.getMyRooms().subscribe({
       next: (response) => {
         this.isLoadingMyRooms = false;
+        console.log('My rooms loaded:', response);
         if (response.success && response.rooms) {
           this.myRooms = response.rooms;
         } else {

@@ -105,6 +105,66 @@
       </div>
     </div>
 
+    <!-- My Rooms Section -->
+    <div class="card bg-base-100 shadow-xl mb-8">
+      <div class="card-body">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="card-title text-2xl">
+            🏠 Mis Salas
+            <div class="badge badge-primary">{{ myRooms.length }}</div>
+          </h2>
+          <button 
+            class="btn btn-outline btn-sm"
+            (click)="refreshRooms()"
+            [class.loading]="isLoadingMyRooms">
+            <svg *ngIf="!isLoadingMyRooms" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="w-4 h-4 stroke-current">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Actualizar
+          </button>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoadingMyRooms" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div *ngFor="let i of [1,2,3]" class="card bg-base-200 animate-pulse">
+            <div class="card-body">
+              <div class="h-4 bg-base-300 rounded w-3/4 mb-2"></div>
+              <div class="h-3 bg-base-300 rounded w-1/2 mb-4"></div>
+              <div class="flex space-x-2">
+                <div class="h-6 bg-base-300 rounded w-16"></div>
+                <div class="h-6 bg-base-300 rounded w-16"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- My Rooms Grid -->
+        <div *ngIf="!isLoadingMyRooms && myRooms.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <app-room-card 
+            *ngFor="let room of myRooms" 
+            [room]="room"
+            [currentUser]="currentUser"
+            [isUserInRoom]="true"
+            (roomAction)="handleRoomAction($event)"
+            (editRoom)="editRoom($event)">
+          </app-room-card>
+        </div>
+
+        <!-- Empty State - No My Rooms -->
+        <div *ngIf="!isLoadingMyRooms && myRooms.length === 0" 
+             class="text-center py-12">
+          <div class="text-6xl mb-4">🏠</div>
+          <h3 class="text-xl font-bold mb-2">No tienes salas aún</h3>
+          <p class="text-base-content/70 mb-4">Crea tu primera sala o únete a una existente</p>
+          <button 
+            class="btn btn-primary"
+            (click)="createRoom()">
+            ➕ Crear Mi Primera Sala
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Popular Rooms Section -->
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body">
@@ -149,54 +209,14 @@
 
         <!-- Rooms Grid -->
         <div *ngIf="!isLoadingRooms && !errorMessage" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div *ngFor="let room of popularRooms; let i = index" 
-               class="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer border hover:border-primary"
-               (click)="joinRoom(room)">
-            <div class="card-body p-4">
-              <!-- Room Header -->
-              <div class="flex justify-between items-start mb-3">
-                <h3 class="card-title text-lg">{{ room.name }}</h3>
-                <div class="badge badge-outline badge-sm">
-                  {{ room.is_private ? '🔒 Privada' : '🌍 Pública' }}
-                </div>
-              </div>
-
-              <!-- Room Description -->
-              <p class="text-sm text-base-content/70 mb-4 line-clamp-2">
-                {{ room.description || 'Una sala de chat activa y divertida. ¡Únete a la conversación!' }}
-              </p>
-
-              <!-- Room Stats -->
-              <div class="flex justify-between items-center text-sm">
-                <div class="flex space-x-4">
-                  <div class="flex items-center space-x-1">
-                    <span class="text-success">●</span>
-                    <span>{{ room.users_count }} usuarios</span>
-                  </div>
-                  <div class="flex items-center space-x-1">
-                    <span>💬</span>
-                    <span>{{ room.messages_count }}</span>
-                  </div>
-                </div>
-                <div class="text-xs opacity-60">
-                  {{ getTimeAgo(room.last_activity || room.updated_at) }}
-                </div>
-              </div>
-
-              <!-- Join Button -->
-              <div class="card-actions justify-between mt-4">
-                <button 
-                  class="btn btn-outline btn-sm"
-                  (click)="editRoom(room); $event.stopPropagation()"
-                  title="Editar sala">
-                  ✏️ Editar
-                </button>
-                <button class="btn btn-primary btn-sm">
-                  🚀 Unirse
-                </button>
-              </div>
-            </div>
-          </div>
+          <app-room-card 
+            *ngFor="let room of popularRooms" 
+            [room]="room"
+            [currentUser]="currentUser"
+            [isUserInRoom]="isUserInRoom(room)"
+            (roomAction)="handleRoomAction($event)"
+            (editRoom)="editRoom($event)">
+          </app-room-card>
         </div>
 
         <!-- Empty State -->

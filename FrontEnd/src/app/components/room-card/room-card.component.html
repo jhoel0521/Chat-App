@@ -1,0 +1,65 @@
+<div class="card bg-base-200 hover:bg-base-300 room-card cursor-pointer border hover:border-primary"
+     (click)="onRoomAction()">
+  <div class="card-body p-4">
+    <!-- Room Header -->
+    <div class="flex justify-between items-start mb-3">
+      <h3 class="card-title text-lg">{{ room.name }}</h3>
+      <div class="flex space-x-2">
+        <div class="badge badge-outline badge-sm">
+          {{ room.is_private ? '🔒 Privada' : '🌍 Pública' }}
+        </div>
+        <!-- Estado del usuario -->
+        <div *ngIf="isRoomCreator()" class="badge creator-badge badge-sm">
+          👑 Creador
+        </div>
+        <div *ngIf="!isRoomCreator() && isUserInRoom" class="badge member-badge badge-sm">
+          ✅ Miembro
+        </div>
+      </div>
+    </div>
+
+    <!-- Room Description -->
+    <p class="text-sm text-base-content/70 mb-4 room-description">
+      {{ room.description || 'Una sala de chat activa y divertida. ¡Únete a la conversación!' }}
+    </p>
+
+    <!-- Room Stats -->
+    <div class="flex justify-between items-center text-sm room-stats">
+      <div class="flex space-x-4">
+        <div class="flex items-center space-x-1">
+          <span class="text-success">●</span>
+          <span>{{ room.users_count }} usuarios</span>
+        </div>
+        <div class="flex items-center space-x-1">
+          <span>💬</span>
+          <span>{{ room.messages_count || 0 }}</span>
+        </div>
+      </div>
+      <div class="text-xs opacity-60">
+        {{ getTimeAgo(room.last_activity || room.updated_at) }}
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="card-actions justify-between mt-4">
+      <!-- Botón de editar solo para creadores -->
+      <button 
+        *ngIf="isRoomCreator()"
+        class="btn btn-outline btn-sm"
+        (click)="onEditRoom($event)"
+        title="Editar sala">
+        ✏️ Editar
+      </button>
+      
+      <!-- Espaciador si no es creador -->
+      <div *ngIf="!isRoomCreator()"></div>
+
+      <!-- Botón principal -->
+      <button 
+        [class]="'btn btn-sm ' + getButtonClass()"
+        (click)="onRoomAction(); $event.stopPropagation()">
+        {{ getButtonIcon() }} {{ getButtonText() }}
+      </button>
+    </div>
+  </div>
+</div>
