@@ -1,0 +1,32 @@
+{
+  "name": "chat-app-launcher",
+  "version": "1.0.0",
+  "description": "Iniciador de servicios para Chat App (Laravel + Angular)",
+  "main": "start-services.js",
+  "scripts": {
+    "start": "node start-services-enhanced.js",
+    "dev": "node start-services-enhanced.js",
+    "services": "node start-services-enhanced.js",
+    "basic": "node start-services.js",
+    "backend": "cd BackEnd && php artisan serve",
+    "websocket": "cd BackEnd && php artisan reverb:start",
+    "frontend": "cd FrontEnd && ng serve",
+    "install-deps": "cd BackEnd && composer install && cd ../FrontEnd && npm install",
+    "setup": "npm run install-deps && cd BackEnd && copy .env.example .env",
+    "migrate": "cd BackEnd && php artisan migrate",
+    "seed": "cd BackEnd && php artisan db:seed",
+    "reset-db": "cd BackEnd && php artisan migrate:fresh --seed"
+  },
+  "keywords": [
+    "laravel",
+    "angular",
+    "chat",
+    "websocket",
+    "reverb"
+  ],
+  "author": "Chat App Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
