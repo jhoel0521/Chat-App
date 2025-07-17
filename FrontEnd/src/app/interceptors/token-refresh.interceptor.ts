@@ -7,28 +7,28 @@ let isRefreshing = false;
 let refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
 export const tokenRefreshInterceptor: HttpInterceptorFn = (req, next) => {
+  const http = inject(HttpClient); // Inyectar HttpClient aquí en el contexto correcto
+
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       // Si es error 401 (Unauthorized) y no es una ruta de auth
       if (error.status === 401 && !isAuthRoute(req.url)) {
-        return handle401Error(req, next);
+        return handle401Error(req, next, http); // Pasar http como parámetro
       }
-      
+
       return throwError(() => error);
     })
   );
 };
 
-function handle401Error(req: any, next: any): Observable<any> {
+function handle401Error(req: any, next: any, http: HttpClient): Observable<any> {
   if (!isRefreshing) {
     isRefreshing = true;
     refreshTokenSubject.next(null);
 
     const currentToken = localStorage.getItem(environment.tokenKey);
-    
+
     if (currentToken) {
-      const http = inject(HttpClient);
-      
       // Intentar refrescar el token usando el endpoint disponible
       return http.post<any>(`${environment.apiUrl}/token/refresh`, {}, {
         headers: {
@@ -38,46 +38,50 @@ function handle401Error(req: any, next: any): Observable<any> {
       }).pipe(
         switchMap((response: any) => {
           isRefreshing = false;
-          
+
           // Extraer el nuevo token de la respuesta (el backend devuelve { success: true, token: "..." })
           const newToken = response.token;
           refreshTokenSubject.next(newToken);
-          
+
           // Guardar nuevo token
           localStorage.setItem(environment.tokenKey, newToken);
-          
+
           // Reintentar la request original con el nuevo token
           return next(addTokenToRequest(req, newToken));
         }),
         catchError((err) => {
           isRefreshing = false;
           refreshTokenSubject.next(null);
-          
+
           // Si el refresh falla, limpiar localStorage y redirigir a login
           localStorage.removeItem(environment.tokenKey);
           localStorage.removeItem(environment.userKey);
-          
+
           // Redirigir a login
           window.location.href = '/login';
-          
+
           return throwError(() => new Error('Token expired, please login again'));
         })
       );
     } else {
       isRefreshing = false;
-      
-      // No hay token, redirigir directamente
+
+      // No hay token, limpiar localStorage y redirigir directamente
+      localStorage.removeItem(environment.tokenKey);
+      localStorage.removeItem(environment.userKey);
       window.location.href = '/login';
       return throwError(() => new Error('No token available, please login'));
     }
   }
-  
+
   // Si ya se está refrescando, esperar
   return refreshTokenSubject.pipe(
     switchMap(token => {
       if (token) {
         return next(addTokenToRequest(req, token));
       } else {
+        localStorage.removeItem(environment.tokenKey);
+        localStorage.removeItem(environment.userKey);
         window.location.href = '/login';
         return throwError(() => new Error('Token refresh failed'));
       }
