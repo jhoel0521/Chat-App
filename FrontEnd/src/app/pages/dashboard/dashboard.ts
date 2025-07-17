@@ -41,11 +41,9 @@ export class DashboardComponent implements OnInit {
   loadPopularRooms(): void {
     this.isLoadingRooms = true;
     this.errorMessage = '';
-    console.log('Loading popular rooms...');
     this.roomService.getRooms().subscribe({
       next: (response) => {
         this.isLoadingRooms = false;
-        console.log('Popular rooms loaded:', response);
         // El service ahora devuelve directamente RoomsResponse
         if (response.success && response.rooms) {
           this.popularRooms = response.rooms;
