@@ -30,11 +30,20 @@ export interface Message {
 
 export interface MessagesResponse {
   success: boolean;
-  messages: Message[];
-  pagination?: {
+  messages: {
     current_page: number;
-    total_pages: number;
-    total_messages: number;
+    data: Message[];
+    first_page_url: string;
+    from: number;
+    last_page: number;
+    last_page_url: string;
+    links: any[];
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number;
+    total: number;
   };
 }
 

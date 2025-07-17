@@ -44,7 +44,6 @@ export class RoomComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Obtener ID de la sala desde la ruta
     this.roomId = this.route.snapshot.paramMap.get('id') || '';
-
     if (!this.roomId) {
       this.router.navigate(['/dashboard']);
       return;
@@ -83,12 +82,13 @@ export class RoomComponent implements OnInit, OnDestroy {
           this.room = response.data;
         } else {
           this.roomError = 'No se pudo cargar la información de la sala';
+          console.warn('⚠️ No se pudo cargar la sala');
         }
       },
       error: (error: any) => {
         this.isLoadingRoom = false;
         this.roomError = 'Error al cargar la sala';
-        console.error('Error loading room:', error);
+        console.error('❌ Error loading room:', error);
       }
     });
   }
@@ -99,20 +99,24 @@ export class RoomComponent implements OnInit, OnDestroy {
   loadMessages(): void {
     this.isLoadingMessages = true;
     this.messagesError = '';
-
     this.messageService.getMessages(this.roomId).subscribe({
       next: (response: any) => {
         this.isLoadingMessages = false;
-        if (response.data && response.data.messages) {
-          this.messages = response.data.messages;
+        // La estructura real del backend es: response.messages.data
+        if (response.messages && response.messages.data) {
+          this.messages = response.messages.data;
         } else {
           this.messages = [];
+          console.warn('⚠️ No se encontraron mensajes o estructura incorrecta');
+          console.warn('⚠️ Estructura recibida:', response);
         }
       },
       error: (error: any) => {
         this.isLoadingMessages = false;
         this.messagesError = 'Error al cargar los mensajes';
-        console.error('Error loading messages:', error);
+        console.error('❌ Error loading messages:', error);
+        console.error('❌ Error status:', error.status);
+        console.error('❌ Error message:', error.message);
       }
     });
   }
