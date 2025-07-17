@@ -118,7 +118,7 @@ class RoomController extends Controller
 
         return response()->json([
             'success' => true,
-            'room' => $room
+            'data' => $room
         ]);
     }
 

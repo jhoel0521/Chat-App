@@ -21,15 +21,15 @@ export class RoomComponent implements OnInit, OnDestroy {
   room: Room | null = null;
   currentUser: User | null = null;
   messages: Message[] = [];
-  
+
   // Estados de carga
   isLoadingRoom = true;
   isLoadingMessages = true;
-  
+
   // Errores
   roomError = '';
   messagesError = '';
-  
+
   // Subscripciones
   private subscriptions: Subscription[] = [];
 
@@ -39,12 +39,12 @@ export class RoomComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private roomService: RoomService,
     private messageService: MessageService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // Obtener ID de la sala desde la ruta
     this.roomId = this.route.snapshot.paramMap.get('id') || '';
-    
+
     if (!this.roomId) {
       this.router.navigate(['/dashboard']);
       return;
@@ -57,12 +57,12 @@ export class RoomComponent implements OnInit, OnDestroy {
         this.router.navigate(['/login']);
         return;
       }
-      
+
       // Cargar datos de la sala
       this.loadRoom();
       this.loadMessages();
     });
-    
+
     this.subscriptions.push(authSub);
   }
 
@@ -76,7 +76,6 @@ export class RoomComponent implements OnInit, OnDestroy {
   loadRoom(): void {
     this.isLoadingRoom = true;
     this.roomError = '';
-    
     this.roomService.getRoom(this.roomId).subscribe({
       next: (response: ApiResponse<Room>) => {
         this.isLoadingRoom = false;
@@ -100,7 +99,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   loadMessages(): void {
     this.isLoadingMessages = true;
     this.messagesError = '';
-    
+
     this.messageService.getMessages(this.roomId).subscribe({
       next: (response: any) => {
         this.isLoadingMessages = false;
@@ -123,7 +122,7 @@ export class RoomComponent implements OnInit, OnDestroy {
    */
   onSendMessage(messageData: ChatFormData): void {
     if (!this.currentUser) return;
-    
+
     this.messageService.sendMessage(this.roomId, messageData).subscribe({
       next: (response: ApiResponse<Message>) => {
         if (response.data) {
