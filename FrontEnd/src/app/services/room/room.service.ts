@@ -60,6 +60,21 @@ export class RoomService {
   }
 
   /**
+   * Obtener mis salas (donde soy creador o estoy unido)
+   */
+  getMyRooms(): Observable<RoomsResponse> {
+    return this.apiService.get<RoomsResponse>('my-rooms').pipe(
+      map((response: any) => {
+        console.log('My rooms loaded:', response);
+        if (response.success && response.rooms) {
+          return response;
+        }
+        return { success: false, rooms: [] };
+      })
+    );
+  }
+
+  /**
    * Obtener detalles de una sala específica
    */
   getRoom(roomId: string): Observable<ApiResponse<Room>> {

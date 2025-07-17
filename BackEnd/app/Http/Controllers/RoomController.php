@@ -36,6 +36,34 @@ class RoomController extends Controller
     }
 
     /**
+     * Obtener mis salas (donde soy creador o estoy unido)
+     */
+    public function myRooms(): JsonResponse
+    {
+        $userId = auth('api')->id();
+
+        // Salas donde el usuario es creador o está unido (no abandonadas)
+        $rooms = Room::with(['creator:id,name'])
+            ->where(function($query) use ($userId) {
+                $query->where('created_by', $userId)
+                      ->orWhereHas('users', function($q) use ($userId) {
+                          $q->where('room_user.user_id', $userId)
+                            ->whereNull('room_user.abandonment_in');
+                      });
+            })
+            ->withCount(['users' => function($query) {
+                $query->whereNull('abandonment_in');
+            }])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'rooms' => $rooms
+        ]);
+    }
+
+    /**
      * Crear una nueva sala
      */
     public function store(Request $request): JsonResponse

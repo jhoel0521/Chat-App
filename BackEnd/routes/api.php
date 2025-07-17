@@ -34,11 +34,10 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/guest/upgrade', [GuestController::class, 'upgrade']);
 });
 
-// 🏠 Salas - Rutas públicas
-Route::get('/rooms', [RoomController::class, 'index']);
-
 // 🏠 Salas - Rutas protegidas
 Route::middleware('auth:api')->group(function () {
+    Route::get('/rooms', [RoomController::class, 'index']);
+    Route::get('/my-rooms', [RoomController::class, 'myRooms']);
     Route::post('/rooms', [RoomController::class, 'store']);
     Route::get('/rooms/{room}', [RoomController::class, 'show']);
     Route::post('/rooms/{room}/join', [RoomController::class, 'join']);

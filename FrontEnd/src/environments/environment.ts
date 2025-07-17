@@ -17,7 +17,6 @@ export const environment = {
     '/register', 
     '/guest/init',
     '/token/refresh',
-    '/rooms' // GET público
   ],
   
   // 🔌 WebSocket Configuration (Laravel Reverb)

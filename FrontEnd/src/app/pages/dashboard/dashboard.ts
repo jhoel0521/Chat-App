@@ -13,7 +13,9 @@ import { RoomService, Room, RoomsResponse } from '../../services/room/room.servi
 export class DashboardComponent implements OnInit {
   currentUser: User | null = null;
   popularRooms: Room[] = [];
+  myRooms: Room[] = [];
   isLoadingRooms = true;
+  isLoadingMyRooms = true;
   errorMessage = '';
 
   constructor(
@@ -28,11 +30,34 @@ export class DashboardComponent implements OnInit {
       this.currentUser = user;
       if (!user) {
         this.router.navigate(['/login']);
+      } else {
+        // Cargar mis salas y salas populares
+        this.loadMyRooms();
+        this.loadPopularRooms();
       }
     });
+  }
 
-    // Cargar salas populares
-    this.loadPopularRooms();
+  /**
+   * Cargar mis salas
+   */
+  loadMyRooms(): void {
+    this.isLoadingMyRooms = true;
+    this.roomService.getMyRooms().subscribe({
+      next: (response) => {
+        this.isLoadingMyRooms = false;
+        if (response.success && response.rooms) {
+          this.myRooms = response.rooms;
+        } else {
+          this.myRooms = [];
+        }
+      },
+      error: (error) => {
+        this.isLoadingMyRooms = false;
+        console.error('Error loading my rooms:', error);
+        this.myRooms = [];
+      }
+    });
   }
 
   /**
@@ -112,7 +137,58 @@ export class DashboardComponent implements OnInit {
    * Refrescar lista de salas
    */
   refreshRooms(): void {
+    this.loadMyRooms();
     this.loadPopularRooms();
+  }
+
+  /**
+   * Verificar si el usuario es creador de la sala
+   */
+  isRoomCreator(room: Room): boolean {
+    return this.currentUser?.id === room.created_by;
+  }
+
+  /**
+   * Verificar si el usuario ya está en la sala
+   */
+  isUserInRoom(room: Room): boolean {
+    // Por ahora, asumimos que si está en "mis salas", está en la sala
+    return this.myRooms.some(myRoom => myRoom.id === room.id);
+  }
+
+  /**
+   * Obtener el texto del botón según el estado del usuario
+   */
+  getButtonText(room: Room): string {
+    if (this.isRoomCreator(room)) {
+      return 'Editar';
+    } else if (this.isUserInRoom(room)) {
+      return 'Ir a sala';
+    } else {
+      return 'Unirse';
+    }
+  }
+
+  /**
+   * Manejar click en el botón de la sala
+   */
+  handleRoomAction(room: Room): void {
+    if (this.isRoomCreator(room)) {
+      this.editRoom(room);
+    } else if (this.isUserInRoom(room)) {
+      this.goToRoom(room);
+    } else {
+      this.joinRoom(room);
+    }
+  }
+
+  /**
+   * Ir a una sala
+   */
+  goToRoom(room: Room): void {
+    console.log('Going to room:', room.name);
+    // TODO: Implementar navegación a la sala de chat
+    // this.router.navigate(['/chat', room.id]);
   }
 
   /**
