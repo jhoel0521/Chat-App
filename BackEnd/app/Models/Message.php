@@ -16,7 +16,8 @@ class Message extends Model
         'user_id',
         'message',
         'message_type',
-        'guest_name'
+        'guest_name',
+        'reply_to'
     ];
 
     protected $casts = [
