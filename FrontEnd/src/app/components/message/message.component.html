@@ -1,0 +1,82 @@
+<!-- Mensaje del sistema -->
+<div *ngIf="isSystemMessage()" class="flex justify-center my-2">
+  <div class="bg-base-200 px-3 py-1 rounded-full text-sm text-base-content/70">
+    <span class="text-info">ℹ️</span> {{ message.message }}
+  </div>
+</div>
+
+<!-- Mensaje de usuario -->
+<div *ngIf="!isSystemMessage()" 
+     [class]="'flex mb-4 ' + (isAuthor ? 'justify-end' : 'justify-start')">
+  
+  <!-- Avatar (solo para mensajes de otros usuarios) -->
+  <div *ngIf="!isAuthor" class="flex-shrink-0 mr-3">
+    <div class="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm font-bold">
+      {{ getUserAvatar() }}
+    </div>
+  </div>
+
+  <!-- Contenido del mensaje -->
+  <div [class]="'max-w-xs lg:max-w-md px-4 py-2 rounded-lg ' + (isAuthor ? 'bg-primary text-primary-content' : 'bg-base-200')">
+    
+    <!-- Nombre del usuario (solo para mensajes de otros usuarios) -->
+    <div *ngIf="!isAuthor" class="text-xs font-semibold mb-1 opacity-70">
+      {{ getUserName() }}
+      <span *ngIf="message.user?.is_anonymous" class="badge badge-warning badge-xs ml-1">Invitado</span>
+    </div>
+
+    <!-- Mensaje de texto -->
+    <div *ngIf="message.message_type === 'text'" class="break-words">
+      {{ message.message }}
+    </div>
+
+    <!-- Mensaje con imagen -->
+    <div *ngIf="isImageFile() && message.file">
+      <img 
+        [src]="message.file.url" 
+        [alt]="message.file.original_filename"
+        class="max-w-full h-auto rounded cursor-pointer hover:opacity-90"
+        (click)="downloadFile()"
+        loading="lazy">
+      <div *ngIf="message.message" class="mt-2 break-words">
+        {{ message.message }}
+      </div>
+    </div>
+
+    <!-- Mensaje con archivo -->
+    <div *ngIf="hasFile() && !isImageFile() && message.file" 
+         class="flex items-center space-x-2 cursor-pointer hover:opacity-90"
+         (click)="downloadFile()">
+      <div class="flex-shrink-0">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+        </svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium truncate">
+          {{ message.file.original_filename }}
+        </div>
+        <div class="text-xs opacity-70">
+          {{ getFileSize() }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje de texto con archivo -->
+    <div *ngIf="hasFile() && message.message" class="mt-2 break-words">
+      {{ message.message }}
+    </div>
+
+    <!-- Hora del mensaje -->
+    <div [class]="'text-xs mt-1 ' + (isAuthor ? 'text-right opacity-70' : 'opacity-50')">
+      {{ formatDate() }}
+    </div>
+  </div>
+
+  <!-- Avatar (solo para mensajes del usuario actual) -->
+  <div *ngIf="isAuthor" class="flex-shrink-0 ml-3">
+    <div class="w-8 h-8 rounded-full bg-success text-success-content flex items-center justify-center text-sm font-bold">
+      {{ getUserAvatar() }}
+    </div>
+  </div>
+</div>

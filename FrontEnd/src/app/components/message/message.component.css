@@ -1,0 +1,55 @@
+/* Estilos para mensajes */
+
+.system-message {
+  text-align: center;
+  font-style: italic;
+  color: var(--fallback-bc, oklch(var(--bc) / 0.7));
+}
+
+.message-author {
+  background: var(--fallback-p, oklch(var(--p)));
+  color: var(--fallback-pc, oklch(var(--pc)));
+  border-radius: 1rem 1rem 0.25rem 1rem;
+}
+
+.message-other {
+  background: var(--fallback-b2, oklch(var(--b2)));
+  color: var(--fallback-bc, oklch(var(--bc)));
+  border-radius: 1rem 1rem 1rem 0.25rem;
+}
+
+/* Animaciones */
+.message-author,
+.message-other {
+  animation: messageAppear 0.3s ease-out;
+}
+
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para imágenes */
+.message-author img,
+.message-other img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 0.5rem;
+  transition: opacity 0.2s ease;
+}
+
+/* Estilos para archivos */
+.file-download {
+  transition: all 0.2s ease;
+}
+
+.file-download:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
