@@ -50,31 +50,21 @@ export class WebSocketService {
      */
     private setupEcho(): void {
         const wsConfig = this.configService.websocketConfig;
-        const token = this.authService.getToken();
 
-        console.log('🔌 Configurando Echo...');
-        console.log('🔌 Token disponible:', token ? 'SÍ' : 'NO');
-        console.log('🔌 Token (full):', token);
-        console.log('🔌 Auth endpoint:', `${this.configService.baseUrl}/broadcasting/auth`);
-
-        if (!token) {
-            console.error('❌ No hay token de autenticación disponible');
-            return;
-        }
+        console.log('🔌 Configurando Echo para canales PÚBLICOS...');
+        console.log('🔌 Sin autenticación requerida');
 
         // Configurar Pusher globalmente
         (window as any).Pusher = Pusher;
 
-        // Configurar Echo para Laravel Reverb
-        console.log('🔌 Configuración Echo:', {
+        // Configurar Echo para Laravel Reverb - SIN AUTENTICACIÓN
+        console.log('🔌 Configuración Echo (público):', {
             broadcaster: 'reverb',
             key: wsConfig.key,
             wsHost: wsConfig.wsHost,
             wsPort: wsConfig.wsPort,
-            wssPort: wsConfig.wssPort,
             forceTLS: wsConfig.forceTLS,
-            enabledTransports: wsConfig.enabledTransports,
-            authEndpoint: `${this.configService.baseUrl}/broadcasting/auth`
+            enabledTransports: wsConfig.enabledTransports
         });
 
         try {
@@ -85,62 +75,68 @@ export class WebSocketService {
                 wsPort: wsConfig.wsPort,
                 wssPort: wsConfig.wssPort,
                 forceTLS: wsConfig.forceTLS,
-                enabledTransports: wsConfig.enabledTransports,
-
-                // Configuración de autenticación
-                auth: {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                },
-
-                // Endpoint de autenticación completo
-                authEndpoint: `${this.configService.baseUrl}/broadcasting/auth`,
+                enabledTransports: wsConfig.enabledTransports
+                // NO AUTH - Solo canales públicos
             });
 
-            console.log('✅ Echo creado exitosamente');
+            console.log('✅ Echo creado exitosamente (sin autenticación)');
+            
+            // Esperar a que el connector se inicialice
+            setTimeout(() => {
+                this.setupConnectionEvents();
+            }, 100);
+            
         } catch (error) {
             console.error('❌ Error al crear Echo:', error);
             return;
         }
-
-        // Verificar que Echo se haya inicializado correctamente
-        if (!this.echo) {
-            console.error('❌ Echo no se inicializó correctamente');
-            return;
-        }
-
-        console.log('🔌 Echo inicializado:', this.echo);
-        console.log('🔌 Echo connector:', this.echo.connector);
-
-        // Configurar eventos de conexión
-        this.setupConnectionEvents();
     }
 
     /**
      * Configurar eventos de conexión
      */
     private setupConnectionEvents(): void {
-        if (!this.echo || !this.echo.connector || !this.echo.connector.socket) {
+        if (!this.echo) {
+            console.error('❌ Echo no está disponible');
+            return;
+        }
+
+        // Verificar que el connector exista
+        if (!this.echo.connector) {
             console.error('❌ Echo connector no está disponible');
             return;
         }
 
-        this.echo.connector.socket.on('connect', () => {
+        console.log('🔌 Echo inicializado:', this.echo);
+        console.log('🔌 Echo connector:', this.echo.connector);
+
+        // Para Reverb, usar el evento 'connected' del connector
+        this.echo.connector.pusher.connection.bind('connected', () => {
             console.log('✅ WebSocket conectado');
             this.connectionStatus.next(true);
         });
 
-        this.echo.connector.socket.on('disconnect', () => {
+        this.echo.connector.pusher.connection.bind('disconnected', () => {
             console.log('❌ WebSocket desconectado');
             this.connectionStatus.next(false);
         });
 
-        this.echo.connector.socket.on('error', (error: any) => {
+        this.echo.connector.pusher.connection.bind('error', (error: any) => {
             console.error('❌ Error de conexión WebSocket:', error);
             this.connectionStatus.next(false);
+        });
+
+        this.echo.connector.pusher.connection.bind('connecting', () => {
+            console.log('🔄 WebSocket conectando...');
+        });
+
+        this.echo.connector.pusher.connection.bind('state_change', (states: any) => {
+            console.log('🔄 Estado WebSocket cambió:', states);
+            if (states.current === 'connected') {
+                this.connectionStatus.next(true);
+            } else if (states.current === 'disconnected') {
+                this.connectionStatus.next(false);
+            }
         });
     }
 
@@ -151,46 +147,75 @@ export class WebSocketService {
         const roomMessages = new Subject<any>();
 
         if (!this.echo) {
-            console.error('Echo no está inicializado');
+            console.error('❌ Echo no está inicializado');
             return roomMessages.asObservable();
         }
 
-        console.log(`🔌 Suscribiendo a canal: room.${roomId}`);
-
-        // Usar canal privado (requiere autenticación)
-        const channel = this.echo.private(`private-room.${roomId}`);
-
-        // Escuchar evento de mensaje enviado
-        channel.listen('message.sent', (data: any) => {
-            console.log('📨 Nuevo mensaje recibido:', data);
-            roomMessages.next({
-                type: 'message.sent',
-                data: data,
-                channel: `room.${roomId}`
+        // Verificar conexión primero
+        if (!this.connectionStatus.value) {
+            console.warn('⚠️ WebSocket no está conectado, esperando conexión...');
+            
+            // Esperar a que se conecte
+            this.isConnected$.subscribe(connected => {
+                if (connected) {
+                    console.log('✅ WebSocket conectado, ahora suscribiendo a sala...');
+                    this.performRoomSubscription(roomId, roomMessages);
+                }
             });
-        });
+            
+            return roomMessages.asObservable();
+        }
 
-        // Escuchar evento de usuario que se unió
-        channel.listen('user.joined', (data: any) => {
-            console.log('👤 Usuario se unió:', data);
-            roomMessages.next({
-                type: 'user.joined',
-                data: data,
-                channel: `room.${roomId}`
-            });
-        });
-
-        // Escuchar evento de usuario que salió
-        channel.listen('user.left', (data: any) => {
-            console.log('👤 Usuario salió:', data);
-            roomMessages.next({
-                type: 'user.left',
-                data: data,
-                channel: `room.${roomId}`
-            });
-        });
-
+        // Si ya está conectado, suscribirse directamente
+        this.performRoomSubscription(roomId, roomMessages);
         return roomMessages.asObservable();
+    }
+
+    /**
+     * Realizar la suscripción a la sala
+     */
+    private performRoomSubscription(roomId: string, roomMessages: Subject<any>): void {
+        console.log(`🔌 Suscribiendo a canal público: room.${roomId}`);
+
+        try {
+            // Usar canal PÚBLICO (NO requiere autenticación)
+            const channel = this.echo.channel(`room.${roomId}`);
+
+            // Escuchar evento de mensaje enviado
+            channel.listen('message.sent', (data: any) => {
+                console.log('📨 Nuevo mensaje recibido:', data);
+                roomMessages.next({
+                    type: 'message.sent',
+                    data: data,
+                    channel: `room.${roomId}`
+                });
+            });
+
+            // Escuchar evento de usuario que se unió
+            channel.listen('user.joined', (data: any) => {
+                console.log('👤 Usuario se unió:', data);
+                roomMessages.next({
+                    type: 'user.joined',
+                    data: data,
+                    channel: `room.${roomId}`
+                });
+            });
+
+            // Escuchar evento de usuario que salió
+            channel.listen('user.left', (data: any) => {
+                console.log('👤 Usuario salió:', data);
+                roomMessages.next({
+                    type: 'user.left',
+                    data: data,
+                    channel: `room.${roomId}`
+                });
+            });
+
+            console.log('✅ Suscripción a canal público exitosa');
+
+        } catch (error) {
+            console.error('❌ Error suscribiendo a canal público:', error);
+        }
     }
 
     /**

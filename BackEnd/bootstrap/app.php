@@ -16,7 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // Agregar middleware CORS a todas las rutas
         $middleware->use([
             \App\Http\Middleware\CorsMiddleware::class,
-            \App\Http\Middleware\ForceJwtGuard::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

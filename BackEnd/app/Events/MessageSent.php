@@ -33,7 +33,7 @@ class MessageSent implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('room.' . $this->room->id),
+            new Channel('room.' . $this->room->id),
         ];
     }
 

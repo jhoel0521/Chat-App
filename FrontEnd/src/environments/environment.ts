@@ -23,12 +23,12 @@ export const environment = {
   websocket: {
     broadcaster: 'reverb',
     key: 'z0mwodskj2t35qi9thy3',
-    wsHost: window.location.hostname, // Usar el mismo host del frontend
+    wsHost: 'localhost', // Host fijo para desarrollo
     wsPort: 8080,
     wssPort: 443, // Cambiar a 443 para producción
     forceTLS: false,
-    enabledTransports: ['ws', 'wss'], // Permitir ambos
-    authEndpoint: '/broadcasting/auth',
+    enabledTransports: ['ws', 'wss'], // Restaurar ambos para compatibilidad
+    authEndpoint: 'http://localhost:8000/broadcasting/auth', // URL completa
     auth: {
       headers: {
         'X-Requested-With': 'XMLHttpRequest'

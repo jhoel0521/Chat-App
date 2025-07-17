@@ -34,6 +34,22 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/guest/upgrade', [GuestController::class, 'upgrade']);
 });
 
+// 🧪 RUTAS DE PRUEBA - WebSocket
+Route::get('/test-websocket', function () {
+    $roomId = request('room_id', 'test');
+    $message = request('message', 'Mensaje de prueba desde Laravel!');
+    
+    \App\Events\TestMessage::dispatch($message, $roomId);
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'Evento enviado',
+        'room_id' => $roomId,
+        'sent_message' => $message,
+        'timestamp' => now()->toISOString()
+    ]);
+});
+
 // 🏠 Salas - Rutas protegidas
 Route::middleware('auth:api')->group(function () {
     Route::get('/rooms', [RoomController::class, 'index']);

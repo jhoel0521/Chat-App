@@ -8,4 +8,6 @@ Route::get('/', function () {
 });
 
 // Rutas de broadcasting
-Broadcast::routes(['middleware' => ['auth:api']]);
+Broadcast::routes([
+    'middleware' => ['auth:api'],
+]);

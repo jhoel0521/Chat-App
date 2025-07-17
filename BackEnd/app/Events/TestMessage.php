@@ -2,38 +2,39 @@
 
 namespace App\Events;
 
-use App\Models\Room;
-use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class UserJoinedRoom implements ShouldBroadcast
+class TestMessage implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $room;
-    public $user;
+    public $message;
+    public $roomId;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Room $room, User $user)
+    public function __construct($message = 'Hola desde Laravel!', $roomId = 'test')
     {
-        $this->room = $room;
-        $this->user = $user;
+        $this->message = $message;
+        $this->roomId = $roomId;
     }
 
     /**
      * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
      */
     public function broadcastOn(): array
     {
         return [
-            new Channel('room.' . $this->room->id),
+            new Channel('room.' . $this->roomId),
         ];
     }
 
@@ -43,13 +44,10 @@ class UserJoinedRoom implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'user' => [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
-                'is_anonymous' => $this->user->is_anonymous,
-            ],
-            'room_id' => $this->room->id,
-            'type' => 'user.joined'
+            'message' => $this->message,
+            'room_id' => $this->roomId,
+            'timestamp' => now()->toISOString(),
+            'type' => 'test.message'
         ];
     }
 
@@ -58,6 +56,6 @@ class UserJoinedRoom implements ShouldBroadcast
      */
     public function broadcastAs(): string
     {
-        return 'user.joined';
+        return 'message.sent';
     }
 }
