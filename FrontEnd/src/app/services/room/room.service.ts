@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs';
 import { ApiService, ApiResponse } from '../api';
+import { environment } from '../../../environments/environment';
 
 export interface Room {
   id: string;
@@ -41,13 +43,20 @@ export interface JoinRoomRequest {
 })
 export class RoomService {
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService) { }
 
   /**
    * Obtener lista de salas públicas
    */
-  getRooms(): Observable<ApiResponse<RoomsResponse>> {
-    return this.apiService.get<RoomsResponse>('rooms');
+  getRooms(): Observable<RoomsResponse> {
+    return this.apiService.get<RoomsResponse>('rooms').pipe(
+      map((response: any) => {
+        if (response.success && response.rooms) {
+          return response;
+        }
+        return { success: false, rooms: [] };
+      })
+    );
   }
 
   /**

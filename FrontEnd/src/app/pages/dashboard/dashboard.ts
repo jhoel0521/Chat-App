@@ -41,15 +41,14 @@ export class DashboardComponent implements OnInit {
   loadPopularRooms(): void {
     this.isLoadingRooms = true;
     this.errorMessage = '';
-    
+    console.log('Loading popular rooms...');
     this.roomService.getRooms().subscribe({
       next: (response) => {
         this.isLoadingRooms = false;
-        
-        // El backend devuelve { success: true, rooms: [...] }
-        // que viene envuelto en ApiResponse
-        if (response.data && response.data.rooms) {
-          this.popularRooms = response.data.rooms;
+        console.log('Popular rooms loaded:', response);
+        // El service ahora devuelve directamente RoomsResponse
+        if (response.success && response.rooms) {
+          this.popularRooms = response.rooms;
         } else {
           this.popularRooms = [];
         }
