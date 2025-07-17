@@ -1,0 +1,90 @@
+/* Estilos para el formulario de chat */
+
+.chat-form {
+  background: var(--fallback-b1, oklch(var(--b1)));
+  border-top: 1px solid var(--fallback-b3, oklch(var(--b3)));
+}
+
+/* Textarea adaptable */
+.textarea {
+  min-height: 2.5rem;
+  max-height: 8rem;
+  resize: none;
+  transition: all 0.2s ease;
+}
+
+.textarea:focus {
+  border-color: var(--fallback-p, oklch(var(--p)));
+  outline: none;
+}
+
+/* Preview de imagen */
+.image-preview {
+  border-radius: 0.5rem;
+  border: 2px dashed var(--fallback-b3, oklch(var(--b3)));
+  transition: all 0.2s ease;
+}
+
+.image-preview:hover {
+  border-color: var(--fallback-p, oklch(var(--p)));
+}
+
+/* Botón de archivo */
+.file-button {
+  transition: all 0.2s ease;
+}
+
+.file-button:hover {
+  transform: scale(1.05);
+}
+
+/* Animaciones */
+.file-preview {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Drag and drop */
+.textarea.drag-over {
+  border-color: var(--fallback-p, oklch(var(--p)));
+  background: var(--fallback-p, oklch(var(--p) / 0.1));
+}
+
+/* Contador de caracteres */
+.char-counter {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.75rem;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.char-counter.warning {
+  color: var(--fallback-wa, oklch(var(--wa)));
+  opacity: 1;
+}
+
+/* Botón de enviar */
+.send-button {
+  transition: all 0.2s ease;
+}
+
+.send-button:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
