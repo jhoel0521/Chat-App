@@ -23,18 +23,24 @@ export class DashboardComponent implements OnInit {
     private authService: AuthService,
     private roomService: RoomService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
-    // Verificar autenticación
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-      if (!user) {
-        this.router.navigate(['/login']);
-      } else {
-        // Cargar mis salas y salas populares
-        this.loadMyRooms();
-        this.loadPopularRooms();
+    this.loadCurrentUser();
+    this.loadMyRooms();
+    this.loadPopularRooms();
+  }
+
+  /**
+   * Cargar información del usuario actual
+   */
+  loadCurrentUser(): void {
+    this.authService.getCurrentUser().subscribe({
+      next: (response) => {
+        this.currentUser = response.data || null;
+      },
+      error: (error) => {
+        console.error('Error loading current user:', error);
       }
     });
   }
@@ -44,10 +50,10 @@ export class DashboardComponent implements OnInit {
    */
   loadMyRooms(): void {
     this.isLoadingMyRooms = true;
+    this.errorMessage = '';
     this.roomService.getMyRooms().subscribe({
       next: (response) => {
         this.isLoadingMyRooms = false;
-        console.log('My rooms loaded:', response);
         if (response.success && response.rooms) {
           this.myRooms = response.rooms;
         } else {
@@ -56,14 +62,14 @@ export class DashboardComponent implements OnInit {
       },
       error: (error) => {
         this.isLoadingMyRooms = false;
+        this.errorMessage = 'Error al cargar tus salas';
         console.error('Error loading my rooms:', error);
-        this.myRooms = [];
       }
     });
   }
 
   /**
-   * Cargar las 10 salas más populares
+   * Cargar salas populares
    */
   loadPopularRooms(): void {
     this.isLoadingRooms = true;
@@ -71,7 +77,6 @@ export class DashboardComponent implements OnInit {
     this.roomService.getRooms().subscribe({
       next: (response) => {
         this.isLoadingRooms = false;
-        // El service ahora devuelve directamente RoomsResponse
         if (response.success && response.rooms) {
           this.popularRooms = response.rooms;
         } else {
@@ -87,116 +92,119 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
+   * Manejar acciones de sala (entrar, unirse, etc.)
+   */
+  handleRoomAction(room: Room): void {
+    const buttonText = this.getButtonText(room);
+
+    switch (buttonText) {
+      case 'Entrar':
+        this.enterRoom(room);
+        break;
+      case 'Unirse':
+        this.joinRoom(room);
+        break;
+      case 'Salir':
+        this.leaveRoom(room);
+        break;
+      default:
+        console.log('Acción no reconocida:', buttonText);
+    }
+  }
+
+  /**
+   * Entrar a una sala
+   */
+  private enterRoom(room: Room): void {
+    this.router.navigate(['/rooms', room.id]);
+  }
+
+  /**
    * Unirse a una sala
    */
-  joinRoom(room: Room): void {
-    console.log('Joining room:', room.name);
+  private joinRoom(room: Room): void {
     this.roomService.joinRoom(room.id).subscribe({
-      next: (response) => {
-        // Redirigir a la sala o mostrar mensaje de éxito
-        console.log('Joined room successfully:', response);
-        // TODO: Implementar navegación a la sala de chat
-        // this.router.navigate(['/chat', room.id]);
+      next: () => {
+        this.router.navigate(['/rooms', room.id]);
       },
       error: (error) => {
         console.error('Error joining room:', error);
-        // TODO: Mostrar mensaje de error al usuario
+        this.errorMessage = 'Error al unirse a la sala';
       }
     });
   }
 
   /**
-   * Navegar a crear nueva sala
+   * Salir de una sala
    */
-  createRoom(): void {
-    this.router.navigate(['/rooms/create']);
+  private leaveRoom(room: Room): void {
+    this.roomService.leaveRoom(room.id).subscribe({
+      next: () => {
+        this.loadMyRooms();
+        this.loadPopularRooms();
+      },
+      error: (error) => {
+        console.error('Error leaving room:', error);
+        this.errorMessage = 'Error al salir de la sala';
+      }
+    });
   }
 
   /**
-   * Navegar a editar sala
+   * Editar una sala
    */
   editRoom(room: Room): void {
     this.router.navigate(['/rooms/edit', room.id]);
   }
 
   /**
-   * Cerrar sesión
+   * Obtener el texto del botón según el estado del usuario
    */
-  logout(): void {
-    this.authService.logout().subscribe({
-      next: () => {
-        this.router.navigate(['/login']);
-      },
-      error: (error) => {
-        console.error('Error during logout:', error);
-        // Forzar logout local si hay error
-        this.router.navigate(['/login']);
-      }
-    });
-  }
+  private getButtonText(room: Room): string {
+    if (this.isRoomCreator(room)) {
+      return 'Entrar';
+    }
 
-  /**
-   * Refrescar lista de salas
-   */
-  refreshRooms(): void {
-    this.loadMyRooms();
-    this.loadPopularRooms();
+    if (this.isUserInRoom(room)) {
+      return 'Entrar';
+    }
+
+    return 'Unirse';
   }
 
   /**
    * Verificar si el usuario es creador de la sala
    */
-  isRoomCreator(room: Room): boolean {
+  private isRoomCreator(room: Room): boolean {
     return this.currentUser?.id === room.created_by;
   }
 
   /**
-   * Verificar si el usuario ya está en la sala
+   * Verificar si el usuario está en la sala
    */
   isUserInRoom(room: Room): boolean {
-    // Por ahora, asumimos que si está en "mis salas", está en la sala
     return this.myRooms.some(myRoom => myRoom.id === room.id);
   }
 
   /**
-   * Obtener el texto del botón según el estado del usuario
+   * Cerrar sesión
    */
-  getButtonText(room: Room): string {
-    if (this.isRoomCreator(room)) {
-      return 'Editar';
-    } else if (this.isUserInRoom(room)) {
-      return 'Ir a sala';
-    } else {
-      return 'Unirse';
-    }
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 
   /**
-   * Manejar click en el botón de la sala
+   * Navegar a crear sala
    */
-  handleRoomAction(room: Room): void {
-    if (this.isRoomCreator(room)) {
-      this.editRoom(room);
-    } else if (this.isUserInRoom(room)) {
-      this.goToRoom(room);
-    } else {
-      this.joinRoom(room);
-    }
+  createRoom(): void {
+    this.router.navigate(['/rooms/create']);
   }
 
   /**
-   * Ir a una sala
+   * Formatear fecha relativa
    */
-  goToRoom(room: Room): void {
-    console.log('Going to room:', room.name);
-    // TODO: Implementar navegación a la sala de chat
-    // this.router.navigate(['/chat', room.id]);
-  }
-
-  /**
-   * Obtener tiempo relativo para mostrar última actividad
-   */
-  getTimeAgo(dateString: string): string {
+  formatRelativeTime(dateString: string): string {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -205,9 +213,9 @@ export class DashboardComponent implements OnInit {
     const diffDays = Math.floor(diffHours / 24);
 
     if (diffMins < 1) return 'Ahora';
-    if (diffMins < 60) return `${diffMins}m`;
-    if (diffHours < 24) return `${diffHours}h`;
-    return `${diffDays}d`;
+    if (diffMins < 60) return `${diffMins} min`;
+    if (diffHours < 24) return `${diffHours} h`;
+    return `${diffDays} d`;
   }
 
   /**
@@ -222,5 +230,13 @@ export class DashboardComponent implements OnInit {
    */
   getTotalMessages(): number {
     return this.popularRooms.reduce((sum, room) => sum + (room.messages_count || 0), 0);
+  }
+
+  /**
+   * Refrescar las salas
+   */
+  refreshRooms(): void {
+    this.loadMyRooms();
+    this.loadPopularRooms();
   }
 }
