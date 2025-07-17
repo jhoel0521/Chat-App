@@ -103,7 +103,12 @@ function startProcess(command, args, options, name, color) {
 
 // Función principal
 async function main() {
+  const isDebugMode = process.argv.includes('--debug');
+  
   log('🎯 Chat App - Iniciador de Servicios', colors.cyan);
+  if (isDebugMode) {
+    log('🐛 MODO DEBUG ACTIVADO', colors.yellow);
+  }
   log('=====================================', colors.cyan);
   
   const backendPath = path.join(__dirname, 'BackEnd');
@@ -146,9 +151,13 @@ async function main() {
 
     // 1. Iniciar Laravel API (Backend)
     log('🔧 Iniciando Laravel API (Backend)...', colors.green);
+    const laravelArgs = ['artisan', 'serve', '--host=0.0.0.0', '--port=8000'];
+    if (isDebugMode) {
+      laravelArgs.push('--verbose');
+    }
     const laravelProcess = await startProcess(
       'php',
-      ['artisan', 'serve', '--host=0.0.0.0', '--port=8000'],
+      laravelArgs,
       { cwd: backendPath },
       'Laravel API',
       colors.green
@@ -160,9 +169,13 @@ async function main() {
 
     // 2. Iniciar Laravel Reverb (WebSocket)
     log('🔧 Iniciando Laravel Reverb (WebSocket)...', colors.magenta);
+    const reverbArgs = ['artisan', 'reverb:start', '--host=0.0.0.0', '--port=8080'];
+    if (isDebugMode) {
+      reverbArgs.push('--debug');
+    }
     const reverbProcess = await startProcess(
       'php',
-      ['artisan', 'reverb:start', '--host=0.0.0.0', '--port=8080'],
+      reverbArgs,
       { cwd: backendPath },
       'Laravel Reverb',
       colors.magenta
@@ -174,9 +187,13 @@ async function main() {
 
     // 3. Iniciar Angular (Frontend)
     log('🔧 Iniciando Angular (Frontend)...', colors.blue);
+    const angularArgs = ['serve', '--host=0.0.0.0', '--port=4200'];
+    if (isDebugMode) {
+      angularArgs.push('--verbose');
+    }
     const angularProcess = await startProcess(
       'ng',
-      ['serve', '--host=0.0.0.0', '--port=4200'],
+      angularArgs,
       { cwd: frontendPath },
       'Angular',
       colors.blue
@@ -191,8 +208,23 @@ async function main() {
     log('🔌 Laravel Reverb:   ws://localhost:8080', colors.magenta);
     log('🚀 Angular App:      http://localhost:4200', colors.blue);
     log('=============================================', colors.green);
+    
+    if (isDebugMode) {
+      log('', colors.white);
+      log('🐛 MODO DEBUG - Información adicional:', colors.yellow);
+      log('-------------------------------------', colors.yellow);
+      log('📊 Backend Path:     ' + backendPath, colors.white);
+      log('📊 Frontend Path:    ' + frontendPath, colors.white);
+      log('� Procesos activos: ' + processes.length, colors.white);
+      log('📊 Logs detallados:  ACTIVADOS', colors.white);
+      log('-------------------------------------', colors.yellow);
+    }
+    
     log('', colors.white);
-    log('💡 Presiona Ctrl+C para detener todos los servicios', colors.yellow);
+    log('�💡 Presiona Ctrl+C para detener todos los servicios', colors.yellow);
+    if (isDebugMode) {
+      log('🐛 Para testing de WebSocket, revisa los logs de Reverb arriba', colors.yellow);
+    }
 
     // Manejar señales de terminación
     process.on('SIGINT', () => {

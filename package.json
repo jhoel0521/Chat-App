@@ -8,6 +8,7 @@
     "dev": "node start-services-enhanced.js",
     "services": "node start-services-enhanced.js",
     "basic": "node start-services.js",
+    "debug": "node start-services.js --debug",
     "backend": "cd BackEnd && php artisan serve",
     "websocket": "cd BackEnd && php artisan reverb:start",
     "frontend": "cd FrontEnd && ng serve",

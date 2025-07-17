@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Broadcast;
-use App\Models\Room;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,19 +18,12 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (string) $user->id === (string) $id;
 });
 
-// Canal para cada sala de chat
-Broadcast::channel('room.{roomId}', function ($user, $roomId) {
-    $room = Room::find($roomId);
-    
-    if (!$room) {
-        return false;
+// Canal para cada sala de chat (privado)
+Broadcast::channel('private-room.{roomId}', function ($user, $roomId) {
+    // Intentar obtener el usuario desde auth:api si $user es null
+    if (!$user) {
+        $user = auth('api')->user();
     }
-    
-    // Si es sala privada, verificar que el usuario pertenezca a la sala
-    if ($room->is_private) {
-        return $room->hasUser($user->id);
-    }
-    
-    // Si es sala pública, cualquier usuario autenticado puede escuchar
-    return $user !== null;
+    // Verificar si el usuario pertenece a la sala
+    return $user && $user->rooms()->where('id', $roomId)->exists();
 });

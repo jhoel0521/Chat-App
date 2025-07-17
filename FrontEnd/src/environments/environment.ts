@@ -1,43 +1,47 @@
 export const environment = {
   production: false,
-  
+
   // 🌐 API Configuration
   apiUrl: 'http://localhost:8000/api',
   baseUrl: 'http://localhost:8000',
-  
+
   // 🔐 Authentication
   tokenKey: 'chat_app_token',
   refreshTokenKey: 'chat_app_refresh_token',
   userKey: 'chat_app_user',
   guestKey: 'chat_app_guest',
-  
+
   // 🚫 Rutas excluidas del token Authorization (no requieren autenticación)
   excludedAuthRoutes: [
     '/login',
-    '/register', 
+    '/register',
     '/guest/init',
     '/token/refresh',
   ],
-  
+
   // 🔌 WebSocket Configuration (Laravel Reverb)
   websocket: {
     broadcaster: 'reverb',
-    key: 'app-key',
-    wsHost: 'localhost',
+    key: 'z0mwodskj2t35qi9thy3',
+    wsHost: window.location.hostname, // Usar el mismo host del frontend
     wsPort: 8080,
-    wssPort: 443,
+    wssPort: 443, // Cambiar a 443 para producción
     forceTLS: false,
-    enabledTransports: ['ws', 'wss'],
-    cluster: 'mt1',
-    authEndpoint: '/broadcasting/auth'
+    enabledTransports: ['ws', 'wss'], // Permitir ambos
+    authEndpoint: '/broadcasting/auth',
+    auth: {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    }
   },
-  
+
   // 📁 File Upload
   fileUpload: {
     maxSize: 10 * 1024 * 1024, // 10MB
     allowedTypes: [
       'image/jpeg',
-      'image/png', 
+      'image/png',
       'image/gif',
       'image/webp',
       'audio/mpeg',
@@ -49,7 +53,7 @@ export const environment = {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ]
   },
-  
+
   // ⏱️ Timeouts and Intervals
   timeouts: {
     apiRequest: 30000, // 30 seconds
@@ -57,7 +61,7 @@ export const environment = {
     heartbeat: 30000, // 30 seconds
     reconnectDelay: 5000 // 5 seconds
   },
-  
+
   // 📱 App Configuration
   app: {
     name: 'Chat App',
@@ -65,7 +69,7 @@ export const environment = {
     description: 'Real-time chat application',
     author: 'Jhoel Cruz - UPDS'
   },
-  
+
   // 🎨 UI Configuration
   ui: {
     messagesPerPage: 50,

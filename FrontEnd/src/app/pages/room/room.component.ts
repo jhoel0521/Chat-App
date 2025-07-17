@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { AuthService, User } from '../../services/auth/auth.service';
 import { RoomService, Room } from '../../services/room/room.service';
 import { MessageService, Message } from '../../services/message/message.service';
+import { WebSocketService } from '../../services/websocket/websocket.service';
 import { MessageComponent } from '../../components/message/message.component';
 import { ChatFormComponent, ChatFormData } from '../../components/chat-form/chat-form.component';
 import { ApiResponse } from '../../services/api';
@@ -30,6 +31,9 @@ export class RoomComponent implements OnInit, OnDestroy {
   roomError = '';
   messagesError = '';
 
+  // Estados WebSocket
+  isWebSocketConnected = false;
+
   // Subscripciones
   private subscriptions: Subscription[] = [];
 
@@ -38,21 +42,29 @@ export class RoomComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private roomService: RoomService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private webSocketService: WebSocketService
   ) { }
 
   ngOnInit(): void {
     // Obtener ID de la sala desde la ruta
     this.roomId = this.route.snapshot.paramMap.get('id') || '';
+    
+    console.log('🚀 Iniciando RoomComponent con roomId:', this.roomId);
+    console.log('🚀 URL actual:', window.location.href);
+
     if (!this.roomId) {
+      console.log('❌ No se encontró roomId, redirigiendo a dashboard');
       this.router.navigate(['/dashboard']);
       return;
     }
 
     // Verificar autenticación
     const authSub = this.authService.currentUser$.subscribe(user => {
+      console.log('👤 Usuario actual:', user);
       this.currentUser = user;
       if (!user) {
+        console.log('❌ Usuario no autenticado, redirigiendo a login');
         this.router.navigate(['/login']);
         return;
       }
@@ -60,13 +72,84 @@ export class RoomComponent implements OnInit, OnDestroy {
       // Cargar datos de la sala
       this.loadRoom();
       this.loadMessages();
+      
+      // Configurar WebSocket después de cargar datos
+      this.setupWebSocket();
     });
 
     this.subscriptions.push(authSub);
   }
 
   ngOnDestroy(): void {
+    // Desconectar WebSocket al salir
+    this.webSocketService.unsubscribeFromRoom(this.roomId);
     this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  /**
+   * Configurar conexión WebSocket
+   */
+  private setupWebSocket(): void {
+    console.log('🔌 Configurando WebSocket para la sala:', this.roomId);
+    
+    // Suscribirse al estado de conexión
+    const connectionSub = this.webSocketService.isConnected$.subscribe(isConnected => {
+      this.isWebSocketConnected = isConnected;
+      console.log('🔌 Estado de conexión WebSocket:', isConnected ? 'Conectado' : 'Desconectado');
+    });
+    
+    // Suscribirse a mensajes en tiempo real
+    const roomMessagesSub = this.webSocketService.subscribeToRoom(this.roomId).subscribe(wsMessage => {
+      console.log('📨 Mensaje WebSocket recibido:', wsMessage);
+      
+      switch (wsMessage.type) {
+        case 'message.sent':
+          this.handleNewMessage(wsMessage.data);
+          break;
+        case 'user.joined':
+          this.handleUserJoined(wsMessage.data);
+          break;
+        case 'user.left':
+          this.handleUserLeft(wsMessage.data);
+          break;
+        default:
+          console.log('📨 Evento WebSocket no manejado:', wsMessage.type);
+      }
+    });
+
+    this.subscriptions.push(connectionSub, roomMessagesSub);
+  }
+
+  /**
+   * Manejar nuevo mensaje recibido por WebSocket
+   */
+  private handleNewMessage(messageData: any): void {
+    console.log('📨 Procesando nuevo mensaje:', messageData);
+    
+    if (messageData.message) {
+      // Agregar el mensaje a la lista si no existe ya
+      const existingMessage = this.messages.find(msg => msg.id === messageData.message.id);
+      if (!existingMessage) {
+        this.messages.push(messageData.message);
+        this.scrollToBottom();
+      }
+    }
+  }
+
+  /**
+   * Manejar usuario que se unió a la sala
+   */
+  private handleUserJoined(userData: any): void {
+    console.log('👤 Usuario se unió:', userData);
+    // TODO: Mostrar notificación de usuario que se unió
+  }
+
+  /**
+   * Manejar usuario que salió de la sala
+   */
+  private handleUserLeft(userData: any): void {
+    console.log('👤 Usuario salió:', userData);
+    // TODO: Mostrar notificación de usuario que salió
   }
 
   /**
