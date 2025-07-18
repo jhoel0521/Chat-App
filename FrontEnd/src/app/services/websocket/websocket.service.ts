@@ -18,7 +18,8 @@ declare global {
 export interface WebSocketMessage {
     type: string;
     data: any;
-    channel: string;
+    channel?: string;
+    timestamp?: string;
 }
 
 @Injectable({
@@ -28,6 +29,7 @@ export class WebSocketService {
     private echo: any = null;
     private connectionStatus = new BehaviorSubject<boolean>(false);
     private messagesSubject = new Subject<WebSocketMessage>();
+    private environment = environment;
 
     // Estados públicos
     public isConnected$ = this.connectionStatus.asObservable();
@@ -250,52 +252,113 @@ export class WebSocketService {
      * Cargar mensajes por WebSocket PURO (sin HTTP)
      */
     loadMessages(roomId: string, timestamp?: string, page: number = 1): void {
-        if (!this.echo) {
-            console.error('❌ Echo no está inicializado');
-            return;
-        }
+        console.log('📚 Solicitando mensajes por WebSocket híbrido...');
 
-        console.log('📚 Solicitando mensajes por WebSocket puro...');
+        // ⚠️ IMPORTANTE: Configurar listener ANTES de hacer la petición
+        this.setupMessageResponseListener(roomId, 'get.messages');
 
-        // Emitir evento directo por WebSocket
-        const channel = this.echo.join(`room.${roomId}`);
-
-        const eventData = {
+        // Preparar datos para la petición
+        const requestData = {
             room_id: roomId,
             timestamp: timestamp || null,
             page: page
         };
 
-        console.log('📚 Emitiendo evento get.messages:', eventData);
+        console.log('📚 Enviando solicitud de mensajes:', requestData);
 
-        // Emitir evento al canal para solicitar mensajes
-        channel.whisper('get.messages', eventData);
+        // Hacer petición HTTP a la ruta WebSocket específica
+        // Esto automáticamente enviará la respuesta por broadcasting
+        this.http.post(`${this.environment.apiUrl}/ws/messages/get`, requestData, {
+            headers: {
+                'Authorization': `Bearer ${this.authService.getToken()}`,
+                'Content-Type': 'application/json'
+            }
+        }).subscribe({
+            next: (response: any) => {
+                console.log('✅ Solicitud de mensajes procesada correctamente');
+                // La respuesta llegará por WebSocket broadcasting automáticamente
+            },
+            error: (error) => {
+                console.error('❌ Error al solicitar mensajes:', error);
+                // Emitir error al Subject
+                this.messagesSubject.next({
+                    type: 'get.messages.error',
+                    data: { error: error.error?.error || 'Error al cargar mensajes' }
+                });
+            }
+        });
     }
 
     /**
      * Enviar mensaje por WebSocket PURO (sin HTTP)
      */
     sendMessage(roomId: string, content: string, userId: string, type: string = 'text'): void {
+        console.log('📨 Enviando mensaje por WebSocket híbrido...');
+
+        // Preparar datos para la petición
+        const requestData = {
+            room_id: roomId,
+            content: content,
+            type: type
+        };
+
+        console.log('📨 Enviando mensaje:', requestData);
+
+        // Hacer petición HTTP a la ruta WebSocket específica
+        // Esto automáticamente enviará la respuesta por broadcasting
+        this.http.post(`${this.environment.apiUrl}/ws/messages/send`, requestData, {
+            headers: {
+                'Authorization': `Bearer ${this.authService.getToken()}`,
+                'Content-Type': 'application/json'
+            }
+        }).subscribe({
+            next: (response: any) => {
+                console.log('✅ Mensaje enviado correctamente');
+                // La respuesta llegará por WebSocket broadcasting automáticamente
+            },
+            error: (error) => {
+                console.error('❌ Error al enviar mensaje:', error);
+                // Emitir error al Subject
+                this.messagesSubject.next({
+                    type: 'message.send.error',
+                    data: { error: error.error?.error || 'Error al enviar mensaje' }
+                });
+            }
+        });
+
+        // Configurar listener para la respuesta por WebSocket
+        this.setupMessageResponseListener(roomId, 'message.send');
+    }
+
+    /**
+     * Configurar listeners para respuestas del servidor
+     */
+    private setupMessageResponseListener(roomId: string, eventType: string): void {
         if (!this.echo) {
             console.error('❌ Echo no está inicializado');
             return;
         }
 
-        console.log('📨 Enviando mensaje por WebSocket puro...');
-
         const channel = this.echo.join(`room.${roomId}`);
-
-        const messageData = {
-            room_id: roomId,
-            user_id: userId,
-            content: content,
-            type: type,
-            timestamp: new Date().toISOString()
-        };
-
-        console.log('📨 Emitiendo evento message.send:', messageData);
-
-        // Emitir evento al canal para enviar mensaje
-        channel.whisper('message.send', messageData);
+        const responseEvent = `${eventType}.response`;
+        
+        // Solo configurar el listener una vez
+        if (!this.responseListeners.has(responseEvent)) {
+            this.responseListeners.add(responseEvent);
+            
+            channel.listen(responseEvent, (data: any) => {
+                console.log(`✅ Respuesta WebSocket recibida para ${eventType}:`, data);
+                
+                // Emitir el evento a través del Subject para que el componente lo procese
+                this.messagesSubject.next({
+                    type: eventType,
+                    data: data.data || data,
+                    timestamp: data.timestamp || new Date().toISOString()
+                });
+            });
+        }
     }
+
+    // Set para rastrear listeners configurados y evitar duplicados
+    private responseListeners = new Set<string>();
 }

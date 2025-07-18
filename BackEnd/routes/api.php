@@ -60,6 +60,12 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/rooms/{room}/join', [RoomController::class, 'join']);
     Route::post('/rooms/{room}/leave', [RoomController::class, 'leave']);
     
+    // 💬 Mensajes WebSocket - Endpoints dedicados para comunicación pura WebSocket
+    Route::prefix('ws')->group(function () {
+        Route::post('/messages/get', [MessageController::class, 'getMessages']);
+        Route::post('/messages/send', [MessageController::class, 'sendMessage']);
+    });
+    
     //  Archivos
     Route::post('/files/upload', [FileController::class, 'upload']);
     Route::get('/files/{file}', [FileController::class, 'show']);
