@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { ConfigService } from '../config.service';
 import { AuthService } from '../auth/auth.service';
+import { HttpClient } from '@angular/common/http';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
@@ -33,7 +34,8 @@ export class WebSocketService {
 
     constructor(
         private configService: ConfigService,
-        private authService: AuthService
+        private authService: AuthService,
+        private http: HttpClient
     ) {
         this.initializeWebSocket();
     }
@@ -211,6 +213,16 @@ export class WebSocketService {
                 });
             });
 
+            // Escuchar evento de mensajes cargados
+            channel.listen('messages.loaded', (data: any) => {
+                console.log('📚 Mensajes cargados:', data);
+                roomMessages.next({
+                    type: 'messages.loaded',
+                    data: data,
+                    channel: `room.${roomId}`
+                });
+            });
+
             console.log('✅ Suscripción a canal público exitosa');
 
         } catch (error) {
@@ -243,5 +255,58 @@ export class WebSocketService {
      */
     isConnected(): boolean {
         return this.connectionStatus.value;
+    }
+
+    /**
+     * Cargar mensajes por WebSocket PURO (sin HTTP)
+     */
+    loadMessages(roomId: string, timestamp?: string, page: number = 1): void {
+        if (!this.echo) {
+            console.error('❌ Echo no está inicializado');
+            return;
+        }
+
+        console.log('📚 Solicitando mensajes por WebSocket puro...');
+
+        // Emitir evento directo por WebSocket
+        const channel = this.echo.channel(`room.${roomId}`);
+        
+        const eventData = {
+            room_id: roomId,
+            timestamp: timestamp || null,
+            page: page
+        };
+
+        console.log('📚 Emitiendo evento get.messages:', eventData);
+        
+        // Emitir evento al canal para solicitar mensajes
+        channel.whisper('get.messages', eventData);
+    }
+
+    /**
+     * Enviar mensaje por WebSocket PURO (sin HTTP)
+     */
+    sendMessage(roomId: string, content: string, userId: string, type: string = 'text'): void {
+        if (!this.echo) {
+            console.error('❌ Echo no está inicializado');
+            return;
+        }
+
+        console.log('📨 Enviando mensaje por WebSocket puro...');
+
+        const channel = this.echo.channel(`room.${roomId}`);
+        
+        const messageData = {
+            room_id: roomId,
+            user_id: userId,
+            content: content,
+            type: type,
+            timestamp: new Date().toISOString()
+        };
+
+        console.log('📨 Emitiendo evento message.send:', messageData);
+        
+        // Emitir evento al canal para enviar mensaje
+        channel.whisper('message.send', messageData);
     }
 }

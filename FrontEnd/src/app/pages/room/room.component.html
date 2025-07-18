@@ -80,6 +80,23 @@
       <!-- Lista de mensajes -->
       <div *ngIf="!isLoadingMessages && !messagesError">
         
+        <!-- Botón cargar más mensajes -->
+        <div *ngIf="hasMoreMessages" class="text-center mb-4">
+          <button 
+            class="btn btn-sm btn-outline"
+            [class.loading]="isLoadingMoreMessages"
+            [disabled]="isLoadingMoreMessages"
+            (click)="loadMoreMessages()">
+            <span *ngIf="!isLoadingMoreMessages">⬆️ Cargar mensajes anteriores</span>
+            <span *ngIf="isLoadingMoreMessages">Cargando...</span>
+          </button>
+        </div>
+
+        <!-- Loading más mensajes -->
+        <div *ngIf="isLoadingMoreMessages" class="text-center mb-4">
+          <div class="loading loading-spinner loading-sm"></div>
+        </div>
+        
         <!-- Mensaje de bienvenida -->
         <div *ngIf="messages.length === 0" class="text-center py-12">
           <div class="text-6xl mb-4">💬</div>

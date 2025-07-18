@@ -26,6 +26,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   // Estados de carga
   isLoadingRoom = true;
   isLoadingMessages = true;
+  isLoadingMoreMessages = false;
 
   // Errores
   roomError = '';
@@ -33,6 +34,10 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   // Estados WebSocket
   isWebSocketConnected = false;
+
+  // Paginación
+  hasMoreMessages = false;
+  lastTimestamp: string | null = null;
 
   // Subscripciones
   private subscriptions: Subscription[] = [];
@@ -112,6 +117,9 @@ export class RoomComponent implements OnInit, OnDestroy {
         case 'user.left':
           this.handleUserLeft(wsMessage.data);
           break;
+        case 'messages.loaded':
+          this.handleMessagesLoaded(wsMessage.data);
+          break;
         default:
           console.log('📨 Evento WebSocket no manejado:', wsMessage.type);
       }
@@ -153,6 +161,38 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Manejar mensajes cargados por WebSocket
+   */
+  private handleMessagesLoaded(messagesData: any): void {
+    console.log('📚 Procesando mensajes cargados:', messagesData);
+    
+    this.isLoadingMessages = false;
+    this.isLoadingMoreMessages = false;
+
+    if (messagesData.messages && Array.isArray(messagesData.messages)) {
+      if (this.lastTimestamp) {
+        // Es paginación - agregar mensajes antiguos al inicio
+        this.messages = [...messagesData.messages, ...this.messages];
+      } else {
+        // Es carga inicial - reemplazar todos los mensajes
+        this.messages = messagesData.messages;
+        // Scroll hacia abajo solo en carga inicial
+        this.scrollToBottom();
+      }
+
+      // Actualizar estado de paginación
+      this.hasMoreMessages = messagesData.has_more || false;
+      this.lastTimestamp = messagesData.last_timestamp || null;
+
+      console.log('✅ Mensajes procesados. Total:', this.messages.length);
+      console.log('📚 Hay más mensajes:', this.hasMoreMessages);
+      console.log('⏰ Último timestamp:', this.lastTimestamp);
+    } else {
+      console.warn('⚠️ Estructura de mensajes incorrecta:', messagesData);
+    }
+  }
+
+  /**
    * Cargar información de la sala
    */
   loadRoom(): void {
@@ -177,51 +217,54 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Cargar mensajes de la sala
+   * Cargar mensajes por WebSocket PURO
    */
   loadMessages(): void {
     this.isLoadingMessages = true;
     this.messagesError = '';
-    this.messageService.getMessages(this.roomId).subscribe({
-      next: (response: any) => {
-        this.isLoadingMessages = false;
-        // La estructura real del backend es: response.messages.data
-        if (response.messages && response.messages.data) {
-          this.messages = response.messages.data;
-        } else {
-          this.messages = [];
-          console.warn('⚠️ No se encontraron mensajes o estructura incorrecta');
-          console.warn('⚠️ Estructura recibida:', response);
-        }
-      },
-      error: (error: any) => {
-        this.isLoadingMessages = false;
-        this.messagesError = 'Error al cargar los mensajes';
-        console.error('❌ Error loading messages:', error);
-        console.error('❌ Error status:', error.status);
-        console.error('❌ Error message:', error.message);
-      }
-    });
+
+    console.log('📚 Cargando mensajes por WebSocket puro...');
+
+    // Solicitar mensajes directamente por WebSocket (sin HTTP)
+    this.webSocketService.loadMessages(this.roomId, this.lastTimestamp || undefined);
   }
 
   /**
-   * Enviar nuevo mensaje
+   * Cargar más mensajes antiguos (paginación WebSocket puro)
+   */
+  loadMoreMessages(): void {
+    if (!this.hasMoreMessages || this.isLoadingMoreMessages) return;
+
+    this.isLoadingMoreMessages = true;
+    console.log('📚 Cargando más mensajes antiguos por WebSocket puro...');
+
+    // Solicitar más mensajes directamente por WebSocket
+    this.webSocketService.loadMessages(this.roomId, this.lastTimestamp || undefined);
+  }
+
+  /**
+   * Enviar nuevo mensaje por WebSocket PURO
    */
   onSendMessage(messageData: ChatFormData): void {
     if (!this.currentUser) return;
 
-    this.messageService.sendMessage(this.roomId, messageData).subscribe({
-      next: (response: ApiResponse<Message>) => {
-        if (response.data) {
-          // Agregar el nuevo mensaje a la lista
-          this.messages.push(response.data);
-          // Scroll hacia abajo
-          this.scrollToBottom();
+    console.log('📨 Enviando mensaje por WebSocket puro:', messageData);
+
+    // Obtener el ID del usuario actual
+    this.authService.getCurrentUser().subscribe({
+      next: (userResponse) => {
+        if (userResponse.data) {
+          const userId = userResponse.data.id;
+          
+          // Enviar mensaje directamente por WebSocket (sin HTTP)
+          this.webSocketService.sendMessage(this.roomId, messageData.message, userId);
+          console.log('✅ Mensaje enviado por WebSocket puro');
+        } else {
+          console.error('❌ No se pudo obtener datos del usuario');
         }
       },
       error: (error: any) => {
-        console.error('Error sending message:', error);
-        // TODO: Mostrar mensaje de error al usuario
+        console.error('❌ Error obteniendo usuario actual:', error);
       }
     });
   }

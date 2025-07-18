@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\GuestController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\WebSocketMessageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,11 +60,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/rooms/{room}/join', [RoomController::class, 'join']);
     Route::post('/rooms/{room}/leave', [RoomController::class, 'leave']);
     
-    // 💬 Mensajes
-    Route::get('/rooms/{room}/messages', [MessageController::class, 'index']);
-    Route::post('/rooms/{room}/messages', [MessageController::class, 'store']);
-    
-    // 📁 Archivos
+    //  Archivos
     Route::post('/files/upload', [FileController::class, 'upload']);
     Route::get('/files/{file}', [FileController::class, 'show']);
 });
