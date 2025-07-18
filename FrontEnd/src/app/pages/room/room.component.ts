@@ -92,6 +92,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     this.subscriptions.push(connectSub);
   }
   private handleWebSocketMessage(wsMessage: any): void {
+    console.log(`📬 Mensaje WebSocket recibido: ${wsMessage.type} 📬`);
     switch (wsMessage.type) {
       case 'message.sent': this.handleNewMessage(wsMessage.data); break;
       case 'user.joined': this.handleUserJoined(wsMessage.data); break;

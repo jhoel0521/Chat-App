@@ -33,14 +33,14 @@ class MessageController extends Controller
             // Verificar que el usuario esté en la sala
             $room = Room::findOrFail($roomId);
             $user = Auth::user();
-            
+
             if (!$room->users()->where('user_id', $user->id)->exists()) {
                 return response()->json(['error' => 'No autorizado para acceder a esta sala'], 403);
             }
 
             // Construir query de mensajes
             $query = Message::with(['user:id,name'])
-                ->where('room_id', $roomId)
+                ->where('room_id', '=', $roomId)
                 ->orderBy('created_at', 'desc');
 
             // Filtrar por timestamp si se proporciona (para paginación)
@@ -51,10 +51,8 @@ class MessageController extends Controller
             // Aplicar paginación
             $messages = $query->take($limit)->get();
 
-            // Revertir orden para mostrar cronológicamente
-            $messages = $messages->reverse()->values();
+            $messages = $messages->values();
 
-            // Información de paginación
             $hasMore = $query->skip($limit)->exists();
             $nextTimestamp = $messages->last()?->created_at;
 
@@ -68,17 +66,12 @@ class MessageController extends Controller
 
             $responseData = [
                 'messages' => $messages,
-                'pagination' => [
-                    'page' => $page,
-                    'limit' => $limit,
-                    'has_more' => $hasMore,
-                    'next_timestamp' => $nextTimestamp
-                ]
+                'has_more' => $hasMore,
+                'last_timestamp' => $nextTimestamp
             ];
 
-            // Si es una llamada WebSocket (desde /api/ws/...), enviar por broadcasting
-            if (str_contains($request->path(), '/api/ws/')) {
-                event(new MessageResponse($roomId, 'get.messages', $responseData));
+            if (str_contains($request->path(), 'api/ws/')) {
+                event(new MessageResponse($roomId, 'messages.loaded', $responseData));
                 Log::info('Respuesta de mensajes enviada por WebSocket broadcasting', [
                     'room_id' => $roomId,
                     'user_id' => $user->id,
@@ -90,7 +83,6 @@ class MessageController extends Controller
                 'success' => true,
                 'data' => $responseData
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error al obtener mensajes', [
                 'error' => $e->getMessage(),
@@ -100,7 +92,7 @@ class MessageController extends Controller
             ]);
 
             // Si es una llamada WebSocket, enviar error por broadcasting
-            if (str_contains($request->path(), '/api/ws/')) {
+            if (str_contains($request->path(), 'api/ws/')) {
                 event(new MessageResponse(
                     $request->room_id ?? 'unknown',
                     'get.messages',
@@ -139,37 +131,21 @@ class MessageController extends Controller
             $message = Message::create([
                 'room_id' => $roomId,
                 'user_id' => $user->id,
-                'content' => $request->content,
-                'type' => $request->get('type', 'text')
+                'message' => $request->content,
+                'message_type' => $request->get('type', 'text')
             ]);
 
             // Cargar la relación del usuario
             $message->load('user:id,name');
-
-            Log::info('Mensaje enviado', [
-                'message_id' => $message->id,
-                'room_id' => $roomId,
-                'user_id' => $user->id,
-                'content_length' => strlen($request->content)
-            ]);
-
             $responseData = ['message' => $message];
-
-            // Si es una llamada WebSocket (desde /api/ws/...), enviar por broadcasting
-            if (str_contains($request->path(), '/api/ws/')) {
+            if (str_contains($request->path(), 'api/ws/')) {
                 event(new MessageResponse($roomId, 'message.send', $responseData));
-                Log::info('Mensaje enviado por WebSocket broadcasting', [
-                    'message_id' => $message->id,
-                    'room_id' => $roomId,
-                    'user_id' => $user->id
-                ]);
             }
 
             return response()->json([
                 'success' => true,
                 'data' => $responseData
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error al enviar mensaje', [
                 'error' => $e->getMessage(),
@@ -179,7 +155,7 @@ class MessageController extends Controller
             ]);
 
             // Si es una llamada WebSocket, enviar error por broadcasting
-            if (str_contains($request->path(), '/api/ws/')) {
+            if (str_contains($request->path(), 'api/ws/')) {
                 event(new MessageResponse(
                     $request->room_id ?? 'unknown',
                     'message.send',
@@ -212,7 +188,7 @@ class MessageController extends Controller
             // Verificar que el usuario esté en la sala
             $room = Room::findOrFail($roomId);
             $user = Auth::user();
-            
+
             if (!$room->users()->where('user_id', $user->id)->exists()) {
                 return response()->json(['error' => 'No autorizado para acceder a esta sala'], 403);
             }
@@ -236,7 +212,6 @@ class MessageController extends Controller
                     ]
                 ]
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error al obtener mensajes tradicional', [
                 'error' => $e->getMessage(),
@@ -258,8 +233,8 @@ class MessageController extends Controller
         try {
             $request->validate([
                 'room_id' => 'required|uuid|exists:rooms,id',
-                'content' => 'required|string|max:1000',
-                'type' => 'in:text,image,file'
+                'message' => 'required|string|max:1000',
+                'message_type' => 'in:text,image,file'
             ]);
 
             $user = Auth::user();
@@ -275,8 +250,8 @@ class MessageController extends Controller
             $message = Message::create([
                 'room_id' => $roomId,
                 'user_id' => $user->id,
-                'content' => $request->content,
-                'type' => $request->get('type', 'text')
+                'message' => $request->message,
+                'message_type' => $request->get('message_type', 'text')
             ]);
 
             // Cargar la relación del usuario
@@ -295,7 +270,6 @@ class MessageController extends Controller
                 'success' => true,
                 'data' => ['message' => $message]
             ], 201);
-
         } catch (\Exception $e) {
             Log::error('Error al crear mensaje tradicional', [
                 'error' => $e->getMessage(),
