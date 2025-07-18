@@ -1,15 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { filter, take } from 'rxjs/operators';
+import { Subscription, interval } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { AuthService, User } from '../../services/auth/auth.service';
 import { RoomService, Room } from '../../services/room/room.service';
-import { MessageService, Message } from '../../services/message/message.service';
-import { WebSocketService } from '../../services/websocket/websocket.service';
+import { MessageService, Message, MessagesResponse } from '../../services/message/message.service';
 import { MessageComponent } from '../../components/message/message.component';
 import { ChatFormComponent, ChatFormData } from '../../components/chat-form/chat-form.component';
 import { ApiResponse } from '../../services/api';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-room',
@@ -33,12 +33,13 @@ export class RoomComponent implements OnInit, OnDestroy {
   roomError = '';
   messagesError = '';
 
-  // Estados WebSocket
-  isWebSocketConnected = false;
+  // Polling de mensajes
+  private pollingSubscription?: Subscription;
+  private isPollingActive = false;
 
   // Paginación
   hasMoreMessages = false;
-  lastTimestamp: string | null = null;
+  currentPage = 1;
 
   // Subscripciones
   private subscriptions: Subscription[] = [];
@@ -48,8 +49,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private roomService: RoomService,
-    private messageService: MessageService,
-    private webSocketService: WebSocketService
+    private messageService: MessageService
   ) { }
 
   ngOnInit(): void {
@@ -61,107 +61,81 @@ export class RoomComponent implements OnInit, OnDestroy {
       if (!user) this.router.navigate(['/login']);
 
       this.loadRoom();
-      this.setupWebSocket();
+      this.startMessagePolling();
     });
   }
 
   ngOnDestroy(): void {
-    // Desconectar WebSocket al salir
-    this.webSocketService.unsubscribeFromRoom(this.roomId);
+    // Detener polling al salir
+    this.stopMessagePolling();
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   /**
-   * Configurar conexión WebSocket
+   * Iniciar polling de mensajes HTTP
    */
-  private setupWebSocket(): void {
-    // Suscribirse una sola vez cuando esté conectado
-    this.webSocketService.isConnected$.pipe(
-      filter((connected: boolean) => connected),
-      take(1) // ❌ SOLO UNA VEZ
-    ).subscribe(() => {
-      console.log('✅ WebSocket conectado, suscribiendo a sala...');
+  private startMessagePolling(): void {
+    if (this.isPollingActive) return;
 
-      const roomSub = this.webSocketService.subscribeToRoom(this.roomId).subscribe({
-        next: (wsMessage) => this.handleWebSocketMessage(wsMessage),
-        error: (err) => console.error('Error en suscripción WebSocket:', err)
+    console.log('🔄 Iniciando polling de mensajes cada', environment.polling.messagesInterval, 'ms');
+    this.isPollingActive = true;
+
+    // Cargar mensajes inicialmente
+    this.loadMessages();
+
+    // Configurar polling automático
+    this.pollingSubscription = interval(environment.polling.messagesInterval)
+      .pipe(
+        switchMap(() => this.messageService.getMessages(this.roomId, 1))
+      )
+      .subscribe({
+        next: (response) => {
+          if (response.data) {
+            this.updateMessagesFromPolling(response.data);
+          }
+        },
+        error: (error) => {
+          console.error('❌ Error en polling de mensajes:', error);
+        }
       });
-
-      this.subscriptions.push(roomSub);
-      this.loadMessages(); // Cargar mensajes después de conectar
-    });
   }
-  private handleWebSocketMessage(wsMessage: any): void {
-    console.log(`📬 Mensaje WebSocket recibido: ${wsMessage.type} 📬`);
-    switch (wsMessage.type) {
-      case 'message.sent': this.handleNewMessage(wsMessage.data); break;
-      case 'user.joined': this.handleUserJoined(wsMessage.data); break;
-      case 'user.left': this.handleUserLeft(wsMessage.data); break;
-      case 'messages.loaded': this.handleMessagesLoaded(wsMessage.data); break;
-      default: console.warn('Evento no manejado:', wsMessage.type);
+
+  /**
+   * Detener polling de mensajes
+   */
+  private stopMessagePolling(): void {
+    if (this.pollingSubscription) {
+      this.pollingSubscription.unsubscribe();
+      this.pollingSubscription = undefined;
     }
-  }
-  /**
-   * Manejar nuevo mensaje recibido por WebSocket
-   */
-  private handleNewMessage(messageData: any): void {
-    console.log('📨 Procesando nuevo mensaje:', messageData);
-
-    if (messageData.message) {
-      // Agregar el mensaje a la lista si no existe ya
-      const existingMessage = this.messages.find(msg => msg.id === messageData.message.id);
-      if (!existingMessage) {
-        this.messages.push(messageData.message);
-        this.scrollToBottom();
-      }
-    }
+    this.isPollingActive = false;
+    console.log('⏹️ Polling de mensajes detenido');
   }
 
   /**
-   * Manejar usuario que se unió a la sala
+   * Actualizar mensajes desde polling (evitar duplicados)
    */
-  private handleUserJoined(userData: any): void {
-    console.log('👤 Usuario se unió:', userData);
-    // TODO: Mostrar notificación de usuario que se unió
-  }
-
-  /**
-   * Manejar usuario que salió de la sala
-   */
-  private handleUserLeft(userData: any): void {
-    console.log('👤 Usuario salió:', userData);
-    // TODO: Mostrar notificación de usuario que salió
-  }
-
-  /**
-   * Manejar mensajes cargados por WebSocket
-   */
-  private handleMessagesLoaded(messagesData: any): void {
-    console.log('📚 Procesando mensajes cargados:', messagesData);
-
-    this.isLoadingMessages = false;
-    this.isLoadingMoreMessages = false;
-
-    if (messagesData.messages && Array.isArray(messagesData.messages)) {
-      if (this.lastTimestamp) {
-        // Es paginación - agregar mensajes antiguos al inicio
-        this.messages = [...messagesData.messages, ...this.messages];
-      } else {
-        // Es carga inicial - reemplazar todos los mensajes
-        this.messages = messagesData.messages;
-        // Scroll hacia abajo solo en carga inicial
+  private updateMessagesFromPolling(data: MessagesResponse): void {
+    if (data.data && Array.isArray(data.data)) {
+      // Crear un mapa de mensajes existentes por ID
+      const existingIds = new Set(this.messages.map(m => m.id));
+      
+      // Filtrar solo mensajes nuevos
+      const newMessages = data.data.filter((msg: Message) => !existingIds.has(msg.id));
+      
+      if (newMessages.length > 0) {
+        console.log('� Nuevos mensajes detectados:', newMessages.length);
+        
+        // Agregar nuevos mensajes y ordenar por fecha
+        this.messages = [...this.messages, ...newMessages].sort((a, b) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        
         this.scrollToBottom();
       }
 
-      // Actualizar estado de paginación
-      this.hasMoreMessages = messagesData.has_more || false;
-      this.lastTimestamp = messagesData.last_timestamp || null;
-
-      console.log('✅ Mensajes procesados. Total:', this.messages.length);
-      console.log('📚 Hay más mensajes:', this.hasMoreMessages);
-      console.log('⏰ Último timestamp:', this.lastTimestamp);
-    } else {
-      console.warn('⚠️ Estructura de mensajes incorrecta:', messagesData);
+      // Actualizar paginación
+      this.hasMoreMessages = data.current_page < data.last_page;
     }
   }
 
@@ -190,54 +164,88 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Cargar mensajes por WebSocket PURO
+   * Cargar mensajes por HTTP
    */
   loadMessages(): void {
     this.isLoadingMessages = true;
     this.messagesError = '';
 
-    console.log('📚 Cargando mensajes por WebSocket puro...');
+    console.log('📚 Cargando mensajes por HTTP...');
 
-    // Solicitar mensajes directamente por WebSocket (sin HTTP)
-    this.webSocketService.loadMessages(this.roomId, this.lastTimestamp || undefined);
+    this.messageService.getMessages(this.roomId, this.currentPage).subscribe({
+      next: (response) => {
+        this.isLoadingMessages = false;
+        if (response.data) {
+          this.messages = response.data.data || [];
+          this.hasMoreMessages = response.data.current_page < response.data.last_page;
+          console.log('✅ Mensajes cargados:', this.messages.length);
+          this.scrollToBottom();
+        } else {
+          this.messagesError = 'No se pudieron cargar los mensajes';
+        }
+      },
+      error: (error: any) => {
+        this.isLoadingMessages = false;
+        this.messagesError = 'Error al cargar mensajes';
+        console.error('❌ Error loading messages:', error);
+      }
+    });
   }
 
   /**
-   * Cargar más mensajes antiguos (paginación WebSocket puro)
+   * Cargar más mensajes antiguos (paginación HTTP)
    */
   loadMoreMessages(): void {
     if (!this.hasMoreMessages || this.isLoadingMoreMessages) return;
 
     this.isLoadingMoreMessages = true;
-    console.log('📚 Cargando más mensajes antiguos por WebSocket puro...');
+    this.currentPage++;
+    
+    console.log('📚 Cargando página', this.currentPage, 'de mensajes...');
 
-    // Solicitar más mensajes directamente por WebSocket
-    this.webSocketService.loadMessages(this.roomId, this.lastTimestamp || undefined);
+    this.messageService.getMessages(this.roomId, this.currentPage).subscribe({
+      next: (response) => {
+        this.isLoadingMoreMessages = false;
+        if (response.data) {
+          // Agregar mensajes antiguos al inicio
+          const olderMessages = response.data.data || [];
+          this.messages = [...olderMessages, ...this.messages];
+          
+          this.hasMoreMessages = response.data.current_page < response.data.last_page;
+          
+          console.log('✅ Más mensajes cargados. Total:', this.messages.length);
+        }
+      },
+      error: (error: any) => {
+        this.isLoadingMoreMessages = false;
+        this.currentPage--; // Revertir incremento en caso de error
+        console.error('❌ Error loading more messages:', error);
+      }
+    });
   }
 
   /**
-   * Enviar nuevo mensaje por WebSocket PURO
+   * Enviar nuevo mensaje por HTTP
    */
   onSendMessage(messageData: ChatFormData): void {
     if (!this.currentUser) return;
 
-    console.log('📨 Enviando mensaje por WebSocket puro:', messageData);
+    console.log('📨 Enviando mensaje por HTTP:', messageData);
 
-    // Obtener el ID del usuario actual
-    this.authService.getCurrentUser().subscribe({
-      next: (userResponse) => {
-        if (userResponse.data) {
-          const userId = userResponse.data.id;
-
-          // Enviar mensaje directamente por WebSocket (sin HTTP)
-          this.webSocketService.sendMessage(this.roomId, messageData.message, userId);
-          console.log('✅ Mensaje enviado por WebSocket puro');
+    this.messageService.sendMessage(this.roomId, messageData.message).subscribe({
+      next: (response) => {
+        if (response.data?.message) {
+          console.log('✅ Mensaje enviado correctamente');
+          
+          // Agregar el mensaje inmediatamente a la lista
+          this.messages.push(response.data.message);
+          this.scrollToBottom();
         } else {
-          console.error('❌ No se pudo obtener datos del usuario');
+          console.error('❌ Error en respuesta del mensaje:', response);
         }
       },
       error: (error: any) => {
-        console.error('❌ Error obteniendo usuario actual:', error);
+        console.error('❌ Error enviando mensaje:', error);
       }
     });
   }

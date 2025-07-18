@@ -7,7 +7,6 @@ use App\Http\Controllers\Auth\GuestController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\FileController;
-use App\Http\Controllers\WebSocketMessageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,22 +34,6 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/guest/upgrade', [GuestController::class, 'upgrade']);
 });
 
-// 🧪 RUTAS DE PRUEBA - WebSocket
-Route::get('/test-websocket', function () {
-    $roomId = request('room_id', 'test');
-    $message = request('message', 'Mensaje de prueba desde Laravel!');
-    
-    \App\Events\TestMessage::dispatch($message, $roomId);
-    
-    return response()->json([
-        'success' => true,
-        'message' => 'Evento enviado',
-        'room_id' => $roomId,
-        'sent_message' => $message,
-        'timestamp' => now()->toISOString()
-    ]);
-});
-
 // 🏠 Salas - Rutas protegidas
 Route::middleware('auth:api')->group(function () {
     Route::get('/rooms', [RoomController::class, 'index']);
@@ -60,13 +43,11 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/rooms/{room}/join', [RoomController::class, 'join']);
     Route::post('/rooms/{room}/leave', [RoomController::class, 'leave']);
     
-    // 💬 Mensajes WebSocket - Endpoints dedicados para comunicación pura WebSocket
-    Route::prefix('ws')->group(function () {
-        Route::post('/messages/get', [MessageController::class, 'getMessages']);
-        Route::post('/messages/send', [MessageController::class, 'sendMessage']);
-    });
+    // 💬 Mensajes HTTP - Endpoints tradicionales
+    Route::get('/messages', [MessageController::class, 'index']);
+    Route::post('/messages', [MessageController::class, 'store']);
     
-    //  Archivos
+    // 📁 Archivos
     Route::post('/files/upload', [FileController::class, 'upload']);
     Route::get('/files/{file}', [FileController::class, 'show']);
 });
