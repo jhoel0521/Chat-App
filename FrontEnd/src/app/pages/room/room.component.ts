@@ -52,37 +52,16 @@ export class RoomComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    // Obtener ID de la sala desde la ruta
     this.roomId = this.route.snapshot.paramMap.get('id') || '';
-    
-    console.log('🚀 Iniciando RoomComponent con roomId:', this.roomId);
-    console.log('🚀 URL actual:', window.location.href);
+    if (!this.roomId) this.router.navigate(['/dashboard']);
 
-    if (!this.roomId) {
-      console.log('❌ No se encontró roomId, redirigiendo a dashboard');
-      this.router.navigate(['/dashboard']);
-      return;
-    }
-
-    // Verificar autenticación
-    const authSub = this.authService.currentUser$.subscribe(user => {
-      console.log('👤 Usuario actual:', user);
+    this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
-      if (!user) {
-        console.log('❌ Usuario no autenticado, redirigiendo a login');
-        this.router.navigate(['/login']);
-        return;
-      }
+      if (!user) this.router.navigate(['/login']);
 
-      // Cargar datos de la sala
       this.loadRoom();
-      this.loadMessages();
-      
-      // Configurar WebSocket después de cargar datos
       this.setupWebSocket();
     });
-
-    this.subscriptions.push(authSub);
   }
 
   ngOnDestroy(): void {
@@ -95,45 +74,38 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Configurar conexión WebSocket
    */
   private setupWebSocket(): void {
-    console.log('🔌 Configurando WebSocket para la sala:', this.roomId);
-    
-    // Suscribirse al estado de conexión
-    const connectionSub = this.webSocketService.isConnected$.subscribe(isConnected => {
-      this.isWebSocketConnected = isConnected;
-      console.log('🔌 Estado de conexión WebSocket:', isConnected ? 'Conectado' : 'Desconectado');
-    });
-    
-    // Suscribirse a mensajes en tiempo real
-    const roomMessagesSub = this.webSocketService.subscribeToRoom(this.roomId).subscribe(wsMessage => {
-      console.log('📨 Mensaje WebSocket recibido:', wsMessage);
-      
-      switch (wsMessage.type) {
-        case 'message.sent':
-          this.handleNewMessage(wsMessage.data);
-          break;
-        case 'user.joined':
-          this.handleUserJoined(wsMessage.data);
-          break;
-        case 'user.left':
-          this.handleUserLeft(wsMessage.data);
-          break;
-        case 'messages.loaded':
-          this.handleMessagesLoaded(wsMessage.data);
-          break;
-        default:
-          console.log('📨 Evento WebSocket no manejado:', wsMessage.type);
+    // Esperar a que el servicio esté conectado
+    const connectSub = this.webSocketService.isConnected$.subscribe(connected => {
+      if (connected) {
+        console.log('✅ WebSocket conectado, suscribiendo a sala...');
+
+        const roomSub = this.webSocketService.subscribeToRoom(this.roomId).subscribe({
+          next: (wsMessage) => this.handleWebSocketMessage(wsMessage),
+          error: (err) => console.error('Error en suscripción WebSocket:', err)
+        });
+
+        this.subscriptions.push(roomSub);
+        this.loadMessages(); // Cargar mensajes después de conectar
       }
     });
 
-    this.subscriptions.push(connectionSub, roomMessagesSub);
+    this.subscriptions.push(connectSub);
   }
-
+  private handleWebSocketMessage(wsMessage: any): void {
+    switch (wsMessage.type) {
+      case 'message.sent': this.handleNewMessage(wsMessage.data); break;
+      case 'user.joined': this.handleUserJoined(wsMessage.data); break;
+      case 'user.left': this.handleUserLeft(wsMessage.data); break;
+      case 'messages.loaded': this.handleMessagesLoaded(wsMessage.data); break;
+      default: console.warn('Evento no manejado:', wsMessage.type);
+    }
+  }
   /**
    * Manejar nuevo mensaje recibido por WebSocket
    */
   private handleNewMessage(messageData: any): void {
     console.log('📨 Procesando nuevo mensaje:', messageData);
-    
+
     if (messageData.message) {
       // Agregar el mensaje a la lista si no existe ya
       const existingMessage = this.messages.find(msg => msg.id === messageData.message.id);
@@ -165,7 +137,7 @@ export class RoomComponent implements OnInit, OnDestroy {
    */
   private handleMessagesLoaded(messagesData: any): void {
     console.log('📚 Procesando mensajes cargados:', messagesData);
-    
+
     this.isLoadingMessages = false;
     this.isLoadingMoreMessages = false;
 
@@ -255,7 +227,7 @@ export class RoomComponent implements OnInit, OnDestroy {
       next: (userResponse) => {
         if (userResponse.data) {
           const userId = userResponse.data.id;
-          
+
           // Enviar mensaje directamente por WebSocket (sin HTTP)
           this.webSocketService.sendMessage(this.roomId, messageData.message, userId);
           console.log('✅ Mensaje enviado por WebSocket puro');

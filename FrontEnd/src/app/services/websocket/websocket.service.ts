@@ -3,6 +3,7 @@ import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { ConfigService } from '../config.service';
 import { AuthService } from '../auth/auth.service';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
@@ -51,23 +52,12 @@ export class WebSocketService {
      * Configurar Laravel Echo
      */
     private setupEcho(): void {
-        const wsConfig = this.configService.websocketConfig;
+        const token = this.authService.getToken();
+        const wsConfig = environment.websocket;
 
-        console.log('🔌 Configurando Echo para canales PÚBLICOS...');
-        console.log('🔌 Sin autenticación requerida');
-
-        // Configurar Pusher globalmente
-        (window as any).Pusher = Pusher;
-
-        // Configurar Echo para Laravel Reverb - SIN AUTENTICACIÓN
-        console.log('🔌 Configuración Echo (público):', {
-            broadcaster: 'reverb',
-            key: wsConfig.key,
-            wsHost: wsConfig.wsHost,
-            wsPort: wsConfig.wsPort,
-            forceTLS: wsConfig.forceTLS,
-            enabledTransports: wsConfig.enabledTransports
-        });
+        if (typeof window !== 'undefined') {
+            (window as any).Pusher = Pusher;
+        }
 
         try {
             this.echo = new Echo({
@@ -77,20 +67,19 @@ export class WebSocketService {
                 wsPort: wsConfig.wsPort,
                 wssPort: wsConfig.wssPort,
                 forceTLS: wsConfig.forceTLS,
-                enabledTransports: wsConfig.enabledTransports
-                // NO AUTH - Solo canales públicos
+                enabledTransports: wsConfig.enabledTransports,
+                auth: {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                },
+                authEndpoint: `${wsConfig.authEndpoint}`
             });
 
-            console.log('✅ Echo creado exitosamente (sin autenticación)');
-            
-            // Esperar a que el connector se inicialice
-            setTimeout(() => {
-                this.setupConnectionEvents();
-            }, 100);
-            
+            this.setupConnectionEvents();
         } catch (error) {
-            console.error('❌ Error al crear Echo:', error);
-            return;
+            console.error('Error al inicializar Echo:', error);
         }
     }
 
@@ -156,7 +145,7 @@ export class WebSocketService {
         // Verificar conexión primero
         if (!this.connectionStatus.value) {
             console.warn('⚠️ WebSocket no está conectado, esperando conexión...');
-            
+
             // Esperar a que se conecte
             this.isConnected$.subscribe(connected => {
                 if (connected) {
@@ -164,7 +153,7 @@ export class WebSocketService {
                     this.performRoomSubscription(roomId, roomMessages);
                 }
             });
-            
+
             return roomMessages.asObservable();
         }
 
@@ -177,11 +166,11 @@ export class WebSocketService {
      * Realizar la suscripción a la sala
      */
     private performRoomSubscription(roomId: string, roomMessages: Subject<any>): void {
-        console.log(`🔌 Suscribiendo a canal público: room.${roomId}`);
+        console.log(`🔌 Suscribiendo a canal PRESENCE: room.${roomId}`);
 
         try {
-            // Usar canal PÚBLICO (NO requiere autenticación)
-            const channel = this.echo.channel(`room.${roomId}`);
+            // Usar canal PRESENCE (requiere autenticación pero permite client events)
+            const channel = this.echo.join(`room.${roomId}`);
 
             // Escuchar evento de mensaje enviado
             channel.listen('message.sent', (data: any) => {
@@ -223,10 +212,10 @@ export class WebSocketService {
                 });
             });
 
-            console.log('✅ Suscripción a canal público exitosa');
+            console.log('✅ Suscripción a canal PRESENCE exitosa');
 
         } catch (error) {
-            console.error('❌ Error suscribiendo a canal público:', error);
+            console.error('❌ Error suscribiendo a canal PRESENCE:', error);
         }
     }
 
@@ -269,8 +258,8 @@ export class WebSocketService {
         console.log('📚 Solicitando mensajes por WebSocket puro...');
 
         // Emitir evento directo por WebSocket
-        const channel = this.echo.channel(`room.${roomId}`);
-        
+        const channel = this.echo.join(`room.${roomId}`);
+
         const eventData = {
             room_id: roomId,
             timestamp: timestamp || null,
@@ -278,7 +267,7 @@ export class WebSocketService {
         };
 
         console.log('📚 Emitiendo evento get.messages:', eventData);
-        
+
         // Emitir evento al canal para solicitar mensajes
         channel.whisper('get.messages', eventData);
     }
@@ -294,8 +283,8 @@ export class WebSocketService {
 
         console.log('📨 Enviando mensaje por WebSocket puro...');
 
-        const channel = this.echo.channel(`room.${roomId}`);
-        
+        const channel = this.echo.join(`room.${roomId}`);
+
         const messageData = {
             room_id: roomId,
             user_id: userId,
@@ -305,7 +294,7 @@ export class WebSocketService {
         };
 
         console.log('📨 Emitiendo evento message.send:', messageData);
-        
+
         // Emitir evento al canal para enviar mensaje
         channel.whisper('message.send', messageData);
     }
