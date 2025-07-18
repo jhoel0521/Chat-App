@@ -48,22 +48,24 @@
                 </div>
 
                 <!-- Login Form -->
-                <form *ngIf="currentTab === 'login'" (ngSubmit)="onLogin()" class="space-y-4">
+                <form *ngIf="currentTab === 'login'" (ngSubmit)="onLogin()" class="grid gap-4">
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">Email</span>
                         </label>
-                        <input type="email" placeholder="tu-email@ejemplo.com" class="input input-bordered"
+                        <input type="email" placeholder="tu-email@ejemplo.com" class="input input-bordered w-full"
                             [(ngModel)]="loginForm.email" name="email" required />
                     </div>
+
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">Contraseña</span>
                         </label>
-                        <input type="password" placeholder="••••••••" class="input input-bordered"
+                        <input type="password" placeholder="••••••••" class="input input-bordered w-full"
                             [(ngModel)]="loginForm.password" name="password" required />
                     </div>
-                    <div class="form-control mt-6">
+
+                    <div class="form-control mt-4">
                         <button type="submit" class="btn btn-primary" [class.loading]="isLoading"
                             [disabled]="isLoading">
                             <span *ngIf="!isLoading">Iniciar Sesión</span>
@@ -73,36 +75,40 @@
                 </form>
 
                 <!-- Register Form -->
-                <form *ngIf="currentTab === 'register'" (ngSubmit)="onRegister()" class="space-y-4">
+                <form *ngIf="currentTab === 'register'" (ngSubmit)="onRegister()" class="grid gap-4">
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">Nombre</span>
                         </label>
-                        <input type="text" placeholder="Tu nombre completo" class="input input-bordered"
+                        <input type="text" placeholder="Tu nombre completo" class="input input-bordered w-full"
                             [(ngModel)]="registerForm.name" name="name" required />
                     </div>
+
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">Email</span>
                         </label>
-                        <input type="email" placeholder="tu-email@ejemplo.com" class="input input-bordered"
+                        <input type="email" placeholder="tu-email@ejemplo.com" class="input input-bordered w-full"
                             [(ngModel)]="registerForm.email" name="email" required />
                     </div>
+
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">Contraseña</span>
                         </label>
-                        <input type="password" placeholder="••••••••" class="input input-bordered"
+                        <input type="password" placeholder="••••••••" class="input input-bordered w-full"
                             [(ngModel)]="registerForm.password" name="password" required />
                     </div>
+
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">Confirmar Contraseña</span>
                         </label>
-                        <input type="password" placeholder="••••••••" class="input input-bordered"
+                        <input type="password" placeholder="••••••••" class="input input-bordered w-full"
                             [(ngModel)]="registerForm.password_confirmation" name="password_confirmation" required />
                     </div>
-                    <div class="form-control mt-6">
+
+                    <div class="form-control mt-4">
                         <button type="submit" class="btn btn-secondary" [class.loading]="isLoading"
                             [disabled]="isLoading">
                             <span *ngIf="!isLoading">Crear Cuenta</span>
@@ -112,7 +118,7 @@
                 </form>
 
                 <!-- Guest Form -->
-                <form *ngIf="currentTab === 'guest'" (ngSubmit)="onGuestInit()" class="space-y-4">
+                <form *ngIf="currentTab === 'guest'" (ngSubmit)="onGuestInit()" class="grid gap-4">
                     <div class="alert alert-info">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             class="stroke-current shrink-0 w-6 h-6">
@@ -122,14 +128,16 @@
                         <span>Como invitado puedes chatear temporalmente. Podrás registrarte después sin perder tus
                             mensajes.</span>
                     </div>
+
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">Nombre de Invitado</span>
                         </label>
-                        <input type="text" placeholder="Ej: Invitado123" class="input input-bordered"
+                        <input type="text" placeholder="Ej: Invitado123" class="input input-bordered w-full"
                             [(ngModel)]="guestForm.name" name="guestName" required />
                     </div>
-                    <div class="form-control mt-6">
+
+                    <div class="form-control mt-4">
                         <button type="submit" class="btn btn-accent" [class.loading]="isLoading" [disabled]="isLoading">
                             <span *ngIf="!isLoading">🚀 Entrar como Invitado</span>
                             <span *ngIf="isLoading">Entrando...</span>
