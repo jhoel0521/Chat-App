@@ -114,8 +114,8 @@ class MessageController extends Controller
         try {
             $request->validate([
                 'room_id' => 'required|uuid|exists:rooms,id',
-                'content' => 'required|string|max:1000',
-                'type' => 'in:text,image,file'
+                'message' => 'required|string|max:1000',
+                'message_type' => 'in:text,image,file'
             ]);
 
             $user = Auth::user();
@@ -131,8 +131,8 @@ class MessageController extends Controller
             $message = Message::create([
                 'room_id' => $roomId,
                 'user_id' => $user->id,
-                'message' => $request->content,
-                'message_type' => $request->get('type', 'text')
+                'message' => $request->message,
+                'message_type' => $request->get('message_type', 'text')
             ]);
 
             // Cargar la relación del usuario

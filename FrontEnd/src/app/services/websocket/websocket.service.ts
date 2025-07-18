@@ -298,8 +298,8 @@ export class WebSocketService {
         // Preparar datos para la petición
         const requestData = {
             room_id: roomId,
-            content: content,
-            type: type
+            message: content,
+            message_type: type
         };
 
         console.log('📨 Enviando mensaje:', requestData);

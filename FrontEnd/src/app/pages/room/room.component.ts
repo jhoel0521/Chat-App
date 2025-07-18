@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { filter, take } from 'rxjs/operators';
 import { AuthService, User } from '../../services/auth/auth.service';
 import { RoomService, Room } from '../../services/room/room.service';
 import { MessageService, Message } from '../../services/message/message.service';
@@ -74,22 +75,21 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Configurar conexión WebSocket
    */
   private setupWebSocket(): void {
-    // Esperar a que el servicio esté conectado
-    const connectSub = this.webSocketService.isConnected$.subscribe(connected => {
-      if (connected) {
-        console.log('✅ WebSocket conectado, suscribiendo a sala...');
+    // Suscribirse una sola vez cuando esté conectado
+    this.webSocketService.isConnected$.pipe(
+      filter((connected: boolean) => connected),
+      take(1) // ❌ SOLO UNA VEZ
+    ).subscribe(() => {
+      console.log('✅ WebSocket conectado, suscribiendo a sala...');
 
-        const roomSub = this.webSocketService.subscribeToRoom(this.roomId).subscribe({
-          next: (wsMessage) => this.handleWebSocketMessage(wsMessage),
-          error: (err) => console.error('Error en suscripción WebSocket:', err)
-        });
+      const roomSub = this.webSocketService.subscribeToRoom(this.roomId).subscribe({
+        next: (wsMessage) => this.handleWebSocketMessage(wsMessage),
+        error: (err) => console.error('Error en suscripción WebSocket:', err)
+      });
 
-        this.subscriptions.push(roomSub);
-        this.loadMessages(); // Cargar mensajes después de conectar
-      }
+      this.subscriptions.push(roomSub);
+      this.loadMessages(); // Cargar mensajes después de conectar
     });
-
-    this.subscriptions.push(connectSub);
   }
   private handleWebSocketMessage(wsMessage: any): void {
     console.log(`📬 Mensaje WebSocket recibido: ${wsMessage.type} 📬`);

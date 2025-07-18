@@ -43,7 +43,7 @@ class MessageResponse implements ShouldBroadcast
      */
     public function broadcastAs(): string
     {
-        return $this->eventType . '.response';
+        return $this->eventType;
     }
 
     /**
