@@ -26,9 +26,8 @@
             <span *ngIf="currentUser.is_anonymous" class="badge badge-warning badge-xs">Invitado</span>
             <span *ngIf="!currentUser.is_anonymous" class="badge badge-success badge-xs">Registrado</span>
           </li>
-          <li><a>Perfil</a></li>
-          <li><a>Configuración</a></li>
-          <li><a class="text-error font-medium" (click)="logout()">Cerrar Sesión</a></li>
+          <li><a (click)="goToProfile()">👤 Mi Perfil</a></li>
+          <li><a class="text-error font-medium" (click)="logout()">🚪 Cerrar Sesión</a></li>
         </ul>
       </div>
     </div>

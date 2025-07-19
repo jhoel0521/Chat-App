@@ -203,6 +203,13 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
+   * Navegar al perfil
+   */
+  goToProfile(): void {
+    this.router.navigate(['/profile']);
+  }
+
+  /**
    * Formatear fecha relativa
    */
   formatRelativeTime(dateString: string): string {

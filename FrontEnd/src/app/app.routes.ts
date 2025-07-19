@@ -4,6 +4,7 @@ import { DashboardComponent } from './pages/dashboard/dashboard';
 import { CreateRoomComponent } from './pages/rooms/create-room';
 import { EditRoomComponent } from './pages/rooms/edit-room';
 import { RoomComponent } from './pages/room/room.component';
+import { ProfileComponent } from './pages/profile/profile.component';
 import { authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -16,6 +17,11 @@ export const routes: Routes = [
   { 
     path: 'dashboard', 
     component: DashboardComponent,
+    canActivate: [authGuard]
+  },
+  { 
+    path: 'profile', 
+    component: ProfileComponent,
     canActivate: [authGuard]
   },
   { 
