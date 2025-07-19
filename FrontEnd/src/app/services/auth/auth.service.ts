@@ -13,6 +13,8 @@ export interface User {
   created_at: string;
   updated_at: string;
   count_messages?: number; 
+  rooms_count?: number;
+  rooms_joined_count?: number;
 }
 
 export interface AuthResponse {

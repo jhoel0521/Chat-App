@@ -97,7 +97,7 @@
                     </svg>
                 </div>
                 <div class="stat-title text-base-content">Salas Creadas</div>
-                <div class="stat-value text-primary">0</div>
+                <div class="stat-value text-primary">{{ currentUser?.rooms_count }}</div>
                 <div class="stat-desc text-base-content">Total de salas</div>
             </div>
 
@@ -110,7 +110,7 @@
                     </svg>
                 </div>
                 <div class="stat-title text-base-content">Mensajes Enviados</div>
-                <div class="stat-value text-secondary">0</div>
+                <div class="stat-value text-secondary">{{ currentUser?.count_messages }}</div>
                 <div class="stat-desc text-base-content">Total de mensajes</div>
             </div>
 
@@ -124,7 +124,7 @@
                     </svg>
                 </div>
                 <div class="stat-title text-base-content">Salas Unidas</div>
-                <div class="stat-value text-accent">0</div>
+                <div class="stat-value text-accent">{{ currentUser?.rooms_joined_count }}</div>
                 <div class="stat-desc text-base-content">Total de participaciones</div>
             </div>
         </div>

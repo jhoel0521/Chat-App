@@ -97,6 +97,12 @@ class AuthController extends Controller
         // obtener todos los mensajes que manda el usuario
         $countMessages = \App\Models\Message::where('user_id', $user->id)->count();
         $user->count_messages = $countMessages;
+        $countRoomsCreated = \App\Models\Room::where('created_by', $user->id)->count();
+        $user->rooms_count = $countRoomsCreated;
+        $countRoomsJoined = \App\Models\Room::whereHas('users', function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->count();
+        $user->rooms_joined_count = $countRoomsJoined;
         return response()->json([
             'success' => true,
             'data' => $user,
