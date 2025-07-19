@@ -194,14 +194,28 @@ export class AuthService {
   /**
    * Cerrar sesión
    */
-  logout(): Observable<ApiResponse<any>> {
-    return this.apiService.post('logout').pipe(
-      tap(() => {
+  logout(): Promise<void> {
+    console.log('🔒 Cerrar sesión');
+    return new Promise((resolve) => {
+      try {
+        this.apiService.post('logout', {}).subscribe({
+          next: () => {
+            this.clearAuthData();
+            resolve();
+          },
+          error: (error) => {
+            console.error('Error during logout:', error);
+            this.clearAuthData();
+            resolve();
+          }
+        });
+      } catch (error) {
+        console.error('Error in logout:', error);
         this.clearAuthData();
-      })
-    );
+        resolve();
+      }
+    });
   }
-
   /**
    * Renovar token JWT
    */
@@ -277,6 +291,7 @@ export class AuthService {
    * Limpiar datos de autenticación
    */
   private clearAuthData(): void {
+    console.log('🔒 Limpiando datos de autenticación');
     localStorage.removeItem(environment.tokenKey);
     localStorage.removeItem(environment.refreshTokenKey);
     localStorage.removeItem(environment.userKey);

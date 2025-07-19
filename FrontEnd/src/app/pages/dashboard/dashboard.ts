@@ -190,8 +190,9 @@ export class DashboardComponent implements OnInit {
    * Cerrar sesión
    */
   logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    this.authService.logout().then(() => {
+      this.router.navigate(['/login']);
+    });
   }
 
   /**
