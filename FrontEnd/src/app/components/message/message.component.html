@@ -8,8 +8,18 @@
 <!-- Regular Message -->
 <div *ngIf="!isSystemMessage()" [class]="'flex gap-3 mb-4 ' + (isAuthor ? 'flex-row-reverse' : '')">
   <!-- Avatar -->
-  <div class="h-8 w-8 flex-shrink-0 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center">
-    {{ getAvatarInitial() }}
+  <div class="h-8 w-8 flex-shrink-0 rounded-full overflow-hidden">
+    <!-- Mostrar foto de perfil si existe -->
+    <img *ngIf="hasProfilePhoto()" 
+         [src]="getProfilePhotoUrl()" 
+         [alt]="getUserName()"
+         class="w-full h-full object-cover">
+    
+    <!-- Mostrar inicial si no tiene foto -->
+    <div *ngIf="!hasProfilePhoto()" 
+         class="w-full h-full bg-blue-600 text-white text-xs flex items-center justify-center">
+      {{ getAvatarInitial() }}
+    </div>
   </div>
 
   <!-- Message Content -->

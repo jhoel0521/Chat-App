@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Message } from '../../services/message/message.service';
 import { User } from '../../services/auth/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-message',
@@ -33,8 +34,8 @@ export class MessageComponent {
    * Verificar si el archivo es una imagen
    */
   isImageFile(): boolean {
-    return this.message.message_type === 'image' || 
-           (this.message.file?.mime_type?.startsWith('image/') ?? false);
+    return this.message.message_type === 'image' ||
+      (this.message.file?.mime_type?.startsWith('image/') ?? false);
   }
 
   /**
@@ -44,17 +45,17 @@ export class MessageComponent {
     if (this.isSystemMessage()) {
       return 'Sistema';
     }
-    
+
     // Si es un usuario anónimo con guest_name
     if (this.message.guest_name) {
       return this.message.guest_name;
     }
-    
+
     // Si tiene usuario asociado
     if (this.message.user?.name) {
       return this.message.user.name;
     }
-    
+
     return 'Usuario anónimo';
   }
 
@@ -67,13 +68,32 @@ export class MessageComponent {
   }
 
   /**
+   * Verificar si el usuario del mensaje tiene foto de perfil
+   */
+  hasProfilePhoto(): boolean {
+    console.log('user Info:', this.message.user);
+    return !!(this.message.user?.profile_photo);
+  }
+
+  /**
+   * Obtener URL de la foto de perfil del usuario del mensaje
+   */
+  getProfilePhotoUrl(): string {
+    if (this.message.user?.profile_photo) {
+      const { baseUrl } = environment;
+      return baseUrl + this.message.user.profile_photo;
+    }
+    return '';
+  }
+
+  /**
    * Obtener la hora formateada
    */
   getFormattedTime(): string {
     const date = new Date(this.message.created_at);
-    return date.toLocaleTimeString('es-ES', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   }
 
@@ -82,7 +102,7 @@ export class MessageComponent {
    */
   getFileSize(): string {
     if (!this.message.file?.size) return '';
-    
+
     const size = this.message.file.size;
     if (size < 1024) return `${size} B`;
     if (size < 1048576) return `${(size / 1024).toFixed(1)} KB`;

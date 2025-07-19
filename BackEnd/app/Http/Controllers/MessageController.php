@@ -34,7 +34,7 @@ class MessageController extends Controller
             }
 
             // Consulta base
-            $query = Message::with(['user:id,name'])
+            $query = Message::with(['user:id,name,profile_photo'])
                 ->where('room_id', $roomId);
 
             // Filtrar por timestamp si se proporciona

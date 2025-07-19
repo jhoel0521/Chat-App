@@ -17,6 +17,7 @@ export interface Message {
     id: string;
     name: string;
     is_anonymous: boolean;
+    profile_photo?: string;
   };
   file?: {
     id: string;
