@@ -5,16 +5,17 @@ import { Subscription, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { AuthService, User } from '../../services/auth/auth.service';
 import { RoomService, Room } from '../../services/room/room.service';
-import { MessageService, Message, MessagesResponse } from '../../services/message/message.service';
-import { MessageComponent } from '../../components/message/message.component';
-import { ChatFormComponent, ChatFormData } from '../../components/chat-form/chat-form.component';
+import { MessageService, Message } from '../../services/message/message.service';
+import { ChatHeaderComponent } from '../../components/chat-header/chat-header.component';
+import { MessagesListComponent } from '../../components/messages-list/messages-list.component';
+import { MessageInputComponent, MessageInputData } from '../../components/message-input/message-input.component';
 import { ApiResponse } from '../../services/api';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-room',
   standalone: true,
-  imports: [CommonModule, MessageComponent, ChatFormComponent],
+  imports: [CommonModule, ChatHeaderComponent, MessagesListComponent, MessageInputComponent],
   templateUrl: './room.component.html',
   styleUrl: './room.component.css'
 })
@@ -168,7 +169,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   /**
    * Enviar nuevo mensaje
    */
-  onSendMessage(messageData: ChatFormData): void {
+  onSendMessage(messageData: MessageInputData): void {
     if (!this.currentUser) return;
 
     this.messageService.sendMessage(this.roomId, messageData.message).subscribe({

@@ -1,0 +1,33 @@
+<div *ngIf="room" class="flex items-center justify-between p-4 border-b bg-slate-800 text-white">
+  <div class="flex items-center gap-3">
+    <button 
+      *ngIf="showBackButton" 
+      (click)="onBack.emit()"
+      class="btn btn-ghost btn-sm text-white hover:bg-slate-700">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </button>
+    
+    <div>
+      <h1 class="text-lg font-semibold">{{ room.name }}</h1>
+      <p *ngIf="room.description" class="text-sm text-slate-300">{{ room.description }}</p>
+    </div>
+  </div>
+  
+  <div class="flex items-center gap-2">
+    <span 
+      class="badge"
+      [class.badge-error]="room.is_private"
+      [class.badge-neutral]="!room.is_private">
+      {{ room.is_private ? 'Privado' : 'Público' }}
+    </span>
+    
+    <div *ngIf="room.users_count" class="flex items-center gap-1 text-sm text-slate-300">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a6 6 0 00-9-5.197"></path>
+      </svg>
+      {{ room.users_count }}
+    </div>
+  </div>
+</div>

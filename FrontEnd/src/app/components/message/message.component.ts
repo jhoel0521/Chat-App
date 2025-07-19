@@ -59,28 +59,17 @@ export class MessageComponent {
   }
 
   /**
-   * Obtener las clases CSS según el tipo de mensaje
+   * Obtener la inicial para el avatar
    */
-  getMessageClasses(): string {
-    if (this.isSystemMessage()) {
-      return 'system-message';
-    }
-    
-    return this.isAuthor ? 'message-author' : 'message-other';
-  }
-
-  /**
-   * Obtener el avatar del usuario
-   */
-  getUserAvatar(): string {
+  getAvatarInitial(): string {
     const name = this.getUserName();
     return name.charAt(0).toUpperCase();
   }
 
   /**
-   * Formatear la fecha del mensaje
+   * Obtener la hora formateada
    */
-  formatDate(): string {
+  getFormattedTime(): string {
     const date = new Date(this.message.created_at);
     return date.toLocaleTimeString('es-ES', { 
       hour: '2-digit', 
