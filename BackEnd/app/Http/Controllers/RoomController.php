@@ -8,8 +8,6 @@ use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
-use App\Events\UserJoinedRoom;
-use App\Events\UserLeftRoom;
 
 class RoomController extends Controller
 {
