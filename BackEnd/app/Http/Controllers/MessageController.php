@@ -101,7 +101,7 @@ class MessageController extends Controller
             ]);
 
             // Cargar la relación del usuario
-            $message->load('user:id,name');
+            $message->load('user:id,name,profile_photo');
 
             Log::info('Mensaje creado', [
                 'message_id' => $message->id,

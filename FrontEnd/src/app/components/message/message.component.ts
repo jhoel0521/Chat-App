@@ -71,7 +71,6 @@ export class MessageComponent {
    * Verificar si el usuario del mensaje tiene foto de perfil
    */
   hasProfilePhoto(): boolean {
-    console.log('user Info:', this.message.user);
     return !!(this.message.user?.profile_photo);
   }
 
