@@ -40,15 +40,12 @@ export const guestGuard: CanActivateFn = (route, state) => {
 
   // Verificar estado actual del token primero
   const hasToken = !!authService.getToken();
-  console.log('GuestGuard - hasToken:', hasToken, 'route:', route.routeConfig?.path);
 
   return authService.isLoggedIn$.pipe(
     map(isLoggedIn => {
-      console.log('GuestGuard - isLoggedIn from observable:', isLoggedIn);
       
       // Si tenemos token o el observable indica que está logueado, redirigir al dashboard
       if (hasToken || isLoggedIn) {
-        console.log('GuestGuard - Already authenticated, redirecting to dashboard');
         // Usar navigateByUrl para navegación absoluta
         router.navigateByUrl('/dashboard');
         return false;
