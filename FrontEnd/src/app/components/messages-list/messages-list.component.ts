@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, AfterViewChecked, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, AfterViewChecked, OnChanges, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Message } from '../../services/message/message.service';
 import { User } from '../../services/auth/auth.service';
@@ -11,7 +11,7 @@ import { MessageComponent } from '../message/message.component';
   templateUrl: './messages-list.component.html',
   styleUrl: './messages-list.component.css'
 })
-export class MessagesListComponent implements AfterViewChecked {
+export class MessagesListComponent implements AfterViewChecked, OnChanges {
   @Input() messages: Message[] = [];
   @Input() currentUser: User | null = null;
   @Input() loading = false;
