@@ -12,8 +12,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   });
   // Obtener token del localStorage solo si no es una ruta excluida
   const token = !isExcludedRoute ? localStorage.getItem(environment.tokenKey) : null;
-  console.log('🔑 Token encontrado:', token ? 'Sí' : 'No', 'para ruta:', req.url);
-  console.warn(token);
   // Clonar la request para agregar headers básicos
   let authReq = req.clone({
     setHeaders: {
