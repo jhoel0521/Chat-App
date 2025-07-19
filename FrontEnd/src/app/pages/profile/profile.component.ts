@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, User } from '../../services/auth/auth.service';
 import { UserService, UpdateProfileRequest, ChangePasswordRequest, UpgradeAccountRequest } from '../../services/user/user.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'app-profile',
@@ -469,7 +470,8 @@ export class ProfileComponent implements OnInit {
      */
     getProfilePhotoUrl(): string {
         if (this.currentUser?.profile_photo) {
-            return this.currentUser.profile_photo;
+            const { baseUrl } = environment;
+            return baseUrl + this.currentUser.profile_photo;
         }
         // Usar un color de fondo y letra inicial como fallback
         const initials = this.currentUser?.name?.charAt(0)?.toUpperCase() || 'U';
