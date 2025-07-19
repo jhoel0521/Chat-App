@@ -238,7 +238,7 @@ export class DashboardComponent implements OnInit {
    * Calcular total de mensajes en todas las salas
    */
   getTotalMessages(): number {
-    return this.popularRooms.reduce((sum, room) => sum + (room.messages_count || 0), 0);
+    return this.currentUser?.count_messages || 0;
   }
 
   /**

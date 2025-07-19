@@ -12,6 +12,7 @@ export interface User {
   profile_photo?: string;
   created_at: string;
   updated_at: string;
+  count_messages?: number; 
 }
 
 export interface AuthResponse {

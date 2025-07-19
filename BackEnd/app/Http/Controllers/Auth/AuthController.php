@@ -94,10 +94,12 @@ class AuthController extends Controller
     public function me(): JsonResponse
     {
         $user = auth('api')->user();
-
+        // obtener todos los mensajes que manda el usuario
+        $countMessages = \App\Models\Message::where('user_id', $user->id)->count();
+        $user->count_messages = $countMessages;
         return response()->json([
             'success' => true,
-            'data' => $user
+            'data' => $user,
         ]);
     }
 
