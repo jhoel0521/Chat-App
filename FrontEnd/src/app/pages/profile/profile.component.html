@@ -174,7 +174,7 @@
                         <span class="label-text text-base-content">Email</span>
                     </label>
                     <input type="email" class="input input-bordered w-full" [(ngModel)]="editForm.email" name="email"
-                        [disabled]="currentUser?.is_anonymous === true">
+                        autocomplete="email" [disabled]="currentUser?.is_anonymous === true">
                     <label class="label" *ngIf="currentUser?.is_anonymous">
                         <span class="label-text-alt text-warning">Actualiza tu cuenta para modificar el email</span>
                     </label>
@@ -302,7 +302,7 @@
                         <span class="label-text text-base-content">Nombre</span>
                     </label>
                     <input type="text" class="input input-bordered w-full" [(ngModel)]="upgradeForm.name" name="name"
-                        required>
+                        autocomplete="name" required>
                 </div>
 
                 <div class="form-control">
@@ -310,7 +310,7 @@
                         <span class="label-text text-base-content">Email</span>
                     </label>
                     <input type="email" class="input input-bordered w-full" [(ngModel)]="upgradeForm.email" name="email"
-                        required>
+                        autocomplete="email" required>
                 </div>
 
                 <div class="form-control">
