@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, timer } from 'rxjs';
@@ -40,6 +40,9 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   // Subscripciones
   private subscriptions: Subscription[] = [];
+
+  // ViewChild para acceder al componente de mensajes
+  @ViewChild(MessagesListComponent) messagesListComponent!: MessagesListComponent;
 
   constructor(
     private route: ActivatedRoute,
@@ -177,7 +180,11 @@ export class RoomComponent implements OnInit, OnDestroy {
         if (response.data?.message) {
           // Agregar el mensaje localmente inmediatamente
           this.messages.push(response.data.message);
-          this.scrollToBottom();
+          
+          // Hacer scroll al final después de un breve delay para que el DOM se actualice
+          setTimeout(() => {
+            this.scrollToBottom();
+          }, 100);
         }
       },
       error: (error) => {
@@ -197,12 +204,9 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Scroll hacia el final de los mensajes
    */
   private scrollToBottom(): void {
-    setTimeout(() => {
-      const container = document.getElementById('messages-container');
-      if (container) {
-        container.scrollTop = 0;
-      }
-    }, 100);
+    if (this.messagesListComponent) {
+      this.messagesListComponent.scrollToBottomNow();
+    }
   }
 
   /**

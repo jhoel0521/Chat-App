@@ -35,12 +35,20 @@ export class MessagesListComponent implements AfterViewChecked, OnChanges {
 
   private scrollToBottom(): void {
     try {
-      if (this.messagesEnd) {
-        this.messagesEnd.nativeElement.scrollIntoView({ behavior: 'smooth' });
+      if (this.scrollArea) {
+        const scrollContainer = this.scrollArea.nativeElement;
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
     } catch (err) {
       console.error('Error scrolling to bottom:', err);
     }
+  }
+
+  /**
+   * Método público para hacer scroll desde el componente padre
+   */
+  public scrollToBottomNow(): void {
+    this.scrollToBottom();
   }
 
   isMessageAuthor(message: Message): boolean {
