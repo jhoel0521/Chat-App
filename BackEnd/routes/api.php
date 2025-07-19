@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\GuestController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +33,15 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/token/refresh', [AuthController::class, 'refresh']);
     Route::patch('/guest/upgrade', [GuestController::class, 'upgrade']);
+    
+    // 👤 Perfil de usuario
+    Route::get('/profile', [UserController::class, 'profile']);
+    Route::patch('/profile', [UserController::class, 'updateProfile']);
+    Route::patch('/profile/password', [UserController::class, 'changePassword']);
+    Route::post('/profile/photo', [UserController::class, 'uploadProfilePhoto']);
+    Route::delete('/profile/photo', [UserController::class, 'deleteProfilePhoto']);
+    Route::post('/profile/delete', [UserController::class, 'deleteAccount']);
+    Route::delete('/profile', [UserController::class, 'deleteAccount']);
 });
 
 // 🏠 Salas - Rutas protegidas
