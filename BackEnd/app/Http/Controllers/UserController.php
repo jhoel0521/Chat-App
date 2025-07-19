@@ -18,7 +18,7 @@ class UserController extends Controller
     {
         $userId = auth('api')->id();
         $user = User::findOrFail($userId);
-        
+
         return response()->json([
             'success' => true,
             'data' => $user
@@ -47,12 +47,12 @@ class UserController extends Controller
         }
 
         $user->name = $request->name;
-        
+
         // Solo actualizar email si no es anónimo y se proporciona
         if (!$user->is_anonymous && $request->filled('email')) {
             $user->email = $request->email;
         }
-        
+
         $user->save();
 
         return response()->json([
@@ -114,47 +114,28 @@ class UserController extends Controller
      */
     public function uploadProfilePhoto(Request $request)
     {
+        $request->validate([
+            'profile_photo' => 'required|image|mimes:jpeg,png,gif|max:5120',
+        ]);
+
         $userId = auth('api')->id();
         $user = User::findOrFail($userId);
 
-        $validator = Validator::make($request->all(), [
-            'profile_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120' // 5MB
+        // Eliminar foto anterior si existe
+        if ($user->profile_photo) {
+            Storage::delete('public/profile_photos/' . basename($user->profile_photo));
+        }
+
+        // Guardar nueva foto
+        $path = $request->file('profile_photo')->store('profile_photos', 'public');
+        $user->profile_photo = Storage::url($path);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Foto de perfil actualizada',
+            'data' => $user
         ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Archivo de imagen inválido',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            // Eliminar foto anterior si existe
-            if ($user->profile_photo) {
-                Storage::delete(str_replace(url('/'), '', $user->profile_photo));
-            }
-
-            // Subir nueva foto
-            $file = $request->file('profile_photo');
-            $filename = 'profile_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('profile_photos', $filename, 'public');
-            
-            // Actualizar usuario
-            $user->profile_photo = url('storage/' . $path);
-            $user->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Foto de perfil actualizada exitosamente',
-                'data' => $user
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al subir la foto: ' . $e->getMessage()
-            ], 500);
-        }
     }
 
     /**
@@ -203,7 +184,9 @@ class UserController extends Controller
                 ], 422);
             }
 
-            if (!Hash::check($request->password, $user->password)) {
+            // Obtener la contraseña sin el cast hashed
+            $userPassword = $user->getAttributes()['password'] ?? null;
+            if (!$userPassword || !Hash::check($request->password, $userPassword)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Contraseña incorrecta'
@@ -219,16 +202,16 @@ class UserController extends Controller
 
             // Eliminar archivos subidos por el usuario
             $user->files()->delete();
-            
+
             // Eliminar mensajes del usuario
             $user->messages()->delete();
-            
+
             // Salir de todas las salas
             $user->rooms()->detach();
-            
+
             // Eliminar salas creadas por el usuario (esto también eliminará mensajes y archivos relacionados)
             $user->createdRooms()->delete();
-            
+
             // Eliminar el usuario
             $user->delete();
 

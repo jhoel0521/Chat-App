@@ -226,7 +226,7 @@
                         <span class="label-text text-base-content">Contraseña Actual</span>
                     </label>
                     <input type="password" class="input input-bordered w-full"
-                        [(ngModel)]="passwordForm.current_password" name="current_password" 
+                        [(ngModel)]="passwordForm.current_password" name="current_password"
                         autocomplete="current-password" required>
                 </div>
 
@@ -243,7 +243,7 @@
                         <span class="label-text text-base-content">Confirmar Nueva Contraseña</span>
                     </label>
                     <input type="password" class="input input-bordered w-full"
-                        [(ngModel)]="passwordForm.new_password_confirmation" name="new_password_confirmation" 
+                        [(ngModel)]="passwordForm.new_password_confirmation" name="new_password_confirmation"
                         autocomplete="new-password" required>
                 </div>
 
@@ -326,7 +326,7 @@
                         <span class="label-text text-base-content">Confirmar Contraseña</span>
                     </label>
                     <input type="password" class="input input-bordered w-full"
-                        [(ngModel)]="upgradeForm.password_confirmation" name="password_confirmation" 
+                        [(ngModel)]="upgradeForm.password_confirmation" name="password_confirmation"
                         autocomplete="new-password" required>
                 </div>
 
@@ -383,8 +383,8 @@
                 <label class="label">
                     <span class="label-text text-base-content">Seleccionar imagen</span>
                 </label>
-                <input type="file" class="file-input file-input-bordered w-full" accept="image/*"
-                    (change)="onFileSelected($event)">
+                <input type="file" class="file-input file-input-bordered w-full" accept="image/jpeg,png,jpg,gif"
+                    name="profile_photo" (change)="onFileSelected($event)">
                 <label class="label">
                     <span class="label-text-alt">Máximo 5MB. Formatos: JPG, PNG, GIF</span>
                 </label>

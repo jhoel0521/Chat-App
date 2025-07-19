@@ -77,7 +77,7 @@ export class UserService {
   uploadProfilePhoto(file: File): Observable<ApiResponse<UserProfile>> {
     const formData = new FormData();
     formData.append('profile_photo', file);
-    
+    console.log('Enviando archivo:', file.name, file.type, file.size); // Debug
     return this.apiService.upload<UserProfile>('profile/photo', formData);
   }
 
