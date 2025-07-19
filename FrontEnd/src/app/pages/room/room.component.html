@@ -1,50 +1,51 @@
 <div class="min-h-screen bg-base-100 flex flex-col">
 
-  <!-- Header de la sala -->
-  <div class="navbar bg-base-100 shadow-lg border-b border-base-300">
+  <!-- Header de la sala - Mayor contraste -->
+  <div class="navbar bg-base-200 shadow-lg border-b border-base-300">
     <div class="navbar-start">
-      <button class="btn btn-ghost btn-circle" (click)="goBack()">
+      <button class="btn btn-ghost btn-circle bg-base-100 border border-base-300" (click)="goBack()">
         ←
       </button>
-      <div class="ml-2">
-        <h1 class="text-xl font-bold">
+      <div class="ml-3">
+        <h1 class="text-xl font-bold text-base-content">
           {{ room?.name || 'Cargando...' }}
         </h1>
-        <div class="text-sm opacity-70">
+        <div class="text-sm opacity-90 text-base-content">
           <span *ngIf="room?.users_count">{{ room?.users_count ?? 0 }} usuarios</span>
-          <span *ngIf="room?.is_private" class="ml-2">🔒 Privada</span>
-          <span *ngIf="!room?.is_private" class="ml-2">🌍 Pública</span>
+          <span *ngIf="room?.is_private" class="ml-2 badge badge-warning badge-sm">🔒 Privada</span>
+          <span *ngIf="!room?.is_private" class="ml-2 badge badge-success badge-sm">🌍 Pública</span>
         </div>
       </div>
     </div>
 
     <div class="navbar-end">
       <!-- Botón de configuración (solo para creadores) -->
-      <button *ngIf="isRoomCreator()" class="btn btn-ghost btn-circle" title="Configurar sala">
+      <button *ngIf="isRoomCreator()" class="btn btn-ghost btn-circle text-base-content hover:bg-base-300"
+        title="Configurar sala">
         ⚙️
       </button>
 
       <!-- Botón de información -->
-      <button class="btn btn-ghost btn-circle" title="Información de la sala">
+      <button class="btn btn-ghost btn-circle text-base-content hover:bg-base-300" title="Información de la sala">
         ℹ️
       </button>
     </div>
   </div>
 
-  <!-- Loading de sala -->
-  <div *ngIf="isLoadingRoom" class="flex-1 flex items-center justify-center">
-    <div class="text-center">
-      <div class="loading loading-spinner loading-lg"></div>
-      <div class="mt-4 text-lg">Cargando sala...</div>
+  <!-- Loading de sala - Mejor visualización -->
+  <div *ngIf="isLoadingRoom" class="flex-1 flex items-center justify-center bg-base-200">
+    <div class="text-center p-8 bg-base-100 rounded-box shadow-lg border border-base-300">
+      <div class="loading loading-spinner loading-lg text-primary"></div>
+      <div class="mt-4 text-lg text-base-content">Cargando sala...</div>
     </div>
   </div>
 
-  <!-- Error de sala -->
-  <div *ngIf="roomError && !isLoadingRoom" class="flex-1 flex items-center justify-center">
-    <div class="text-center">
-      <div class="text-6xl mb-4">❌</div>
-      <h2 class="text-2xl font-bold mb-2">Error al cargar la sala</h2>
-      <p class="text-base-content/70 mb-4">{{ roomError }}</p>
+  <!-- Error de sala - Más destacado -->
+  <div *ngIf="roomError && !isLoadingRoom" class="flex-1 flex items-center justify-center bg-base-200">
+    <div class="text-center p-8 bg-base-100 rounded-box shadow-lg border border-base-300 max-w-md">
+      <div class="text-6xl mb-4 text-error">❌</div>
+      <h2 class="text-2xl font-bold mb-2 text-base-content">Error al cargar la sala</h2>
+      <p class="text-base-content/90 mb-6">{{ roomError }}</p>
       <button class="btn btn-primary" (click)="loadRoom()">
         Reintentar
       </button>
@@ -52,32 +53,32 @@
   </div>
 
   <!-- Contenido principal -->
-  <div *ngIf="!isLoadingRoom && !roomError" class="flex-1 flex flex-col">
+  <div *ngIf="!isLoadingRoom && !roomError" class="flex-1 flex flex-col bg-base-200">
 
     <!-- Área de mensajes -->
-    <div class="flex-1 overflow-y-auto p-4 messages-container">
+    <div class="flex-1 overflow-y-auto p-4 bg-base-100" id="messages-container">
 
-      <!-- Loading de mensajes -->
+      <!-- Loading de mensajes - Mejor integración -->
       <div *ngIf="isLoadingMessages" class="flex justify-center py-8">
         <div class="text-center">
-          <div class="loading loading-spinner loading-md"></div>
-          <div class="mt-2 text-sm">Cargando mensajes...</div>
+          <div class="loading loading-spinner loading-md text-primary"></div>
+          <div class="mt-2 text-sm text-base-content">Cargando mensajes...</div>
         </div>
       </div>
 
-      <!-- Error de mensajes -->
-      <div *ngIf="messagesError && !isLoadingMessages" class="text-center py-8">
-        <div class="text-4xl mb-2">⚠️</div>
-        <p class="text-base-content/70 mb-4">{{ messagesError }}</p>
+      <!-- Error de mensajes - Más visible -->
+      <div *ngIf="messagesError && !isLoadingMessages" class="text-center py-8 bg-error/10 rounded-box mx-4">
+        <div class="text-4xl mb-2 text-error">⚠️</div>
+        <p class="text-base-content/90 font-medium">{{ messagesError }}</p>
       </div>
 
       <!-- Lista de mensajes -->
-      <div *ngIf="!isLoadingMessages && !messagesError">
-        <!-- Mensaje de bienvenida -->
-        <div *ngIf="messages.length === 0" class="text-center py-12">
-          <div class="text-6xl mb-4">💬</div>
-          <h3 class="text-xl font-bold mb-2">¡Bienvenido a {{ room?.name }}!</h3>
-          <p class="text-base-content/70 mb-4">Sé el primero en enviar un mensaje</p>
+      <div *ngIf="!isLoadingMessages && !messagesError" class="space-y-4">
+        <!-- Mensaje de bienvenida - Mayor destaque -->
+        <div *ngIf="messages.length === 0" class="text-center py-12 bg-base-200 rounded-box mx-4">
+          <div class="text-6xl mb-4 text-primary">💬</div>
+          <h3 class="text-xl font-bold mb-2 text-base-content">¡Bienvenido a {{ room?.name }}!</h3>
+          <p class="text-base-content/80 mb-4">Sé el primero en enviar un mensaje</p>
         </div>
 
         <!-- Mensajes -->
@@ -88,7 +89,7 @@
     </div>
 
     <!-- Formulario de chat -->
-    <app-chat-form (sendMessage)="onSendMessage($event)">
+    <app-chat-form (sendMessage)="onSendMessage($event)" class="bg-base-100 border-t border-base-300">
     </app-chat-form>
   </div>
 </div>
