@@ -166,7 +166,7 @@
                         <span class="label-text text-base-content">Nombre</span>
                     </label>
                     <input type="text" class="input input-bordered w-full" [(ngModel)]="editForm.name" name="name"
-                        required>
+                        autocomplete="name" required>
                 </div>
 
                 <div class="form-control">
@@ -226,7 +226,8 @@
                         <span class="label-text text-base-content">Contraseña Actual</span>
                     </label>
                     <input type="password" class="input input-bordered w-full"
-                        [(ngModel)]="passwordForm.current_password" name="current_password" required>
+                        [(ngModel)]="passwordForm.current_password" name="current_password" 
+                        autocomplete="current-password" required>
                 </div>
 
                 <div class="form-control">
@@ -234,7 +235,7 @@
                         <span class="label-text text-base-content">Nueva Contraseña</span>
                     </label>
                     <input type="password" class="input input-bordered w-full" [(ngModel)]="passwordForm.new_password"
-                        name="new_password" required>
+                        name="new_password" autocomplete="new-password" required>
                 </div>
 
                 <div class="form-control">
@@ -242,7 +243,8 @@
                         <span class="label-text text-base-content">Confirmar Nueva Contraseña</span>
                     </label>
                     <input type="password" class="input input-bordered w-full"
-                        [(ngModel)]="passwordForm.new_password_confirmation" name="new_password_confirmation" required>
+                        [(ngModel)]="passwordForm.new_password_confirmation" name="new_password_confirmation" 
+                        autocomplete="new-password" required>
                 </div>
 
                 <div class="modal-action">
@@ -316,7 +318,7 @@
                         <span class="label-text text-base-content">Contraseña</span>
                     </label>
                     <input type="password" class="input input-bordered w-full" [(ngModel)]="upgradeForm.password"
-                        name="password" required>
+                        name="password" autocomplete="new-password" required>
                 </div>
 
                 <div class="form-control">
@@ -324,7 +326,8 @@
                         <span class="label-text text-base-content">Confirmar Contraseña</span>
                     </label>
                     <input type="password" class="input input-bordered w-full"
-                        [(ngModel)]="upgradeForm.password_confirmation" name="password_confirmation" required>
+                        [(ngModel)]="upgradeForm.password_confirmation" name="password_confirmation" 
+                        autocomplete="new-password" required>
                 </div>
 
                 <div class="modal-action">
@@ -445,7 +448,7 @@
                     <span class="label-text text-base-content">Confirma tu contraseña para eliminar la cuenta</span>
                 </label>
                 <input type="password" class="input input-bordered w-full" [(ngModel)]="deletePassword"
-                    placeholder="Tu contraseña actual" required>
+                    placeholder="Tu contraseña actual" autocomplete="current-password" required>
             </div>
 
             <div class="text-center mb-6">

@@ -460,6 +460,13 @@ export class ProfileComponent implements OnInit {
     if (this.currentUser?.profile_photo) {
       return this.currentUser.profile_photo;
     }
-    return 'https://via.placeholder.com/150/9CA3AF/FFFFFF?text=' + (this.currentUser?.name?.charAt(0) || 'U');
+    // Usar un color de fondo y letra inicial como fallback
+    const initials = this.currentUser?.name?.charAt(0)?.toUpperCase() || 'U';
+    return `data:image/svg+xml;base64,${btoa(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+        <rect width="150" height="150" fill="#9CA3AF"/>
+        <text x="75" y="85" font-family="Arial, sans-serif" font-size="60" fill="white" text-anchor="middle">${initials}</text>
+      </svg>
+    `)}`;
   }
 }
