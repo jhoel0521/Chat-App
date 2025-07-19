@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService, User } from '../../services/auth/auth.service';
 import { RoomService, Room, RoomsResponse } from '../../services/room/room.service';
 import { RoomCardComponent } from '../../components/room-card/room-card.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -246,5 +247,23 @@ export class DashboardComponent implements OnInit {
   refreshRooms(): void {
     this.loadMyRooms();
     this.loadPopularRooms();
+  }
+
+  /**
+   * Verificar si el usuario tiene foto de perfil
+   */
+  hasProfilePhoto(): boolean {
+    return !!(this.currentUser?.profile_photo);
+  }
+
+  /**
+   * Obtener URL de la foto de perfil del usuario
+   */
+  getProfilePhotoUrl(): string {
+    if (this.currentUser?.profile_photo) {
+      const { baseUrl } = environment;
+      return baseUrl + this.currentUser.profile_photo;
+    }
+    return '';
   }
 }
