@@ -1,5 +1,5 @@
 <div class="min-h-screen bg-base-100 flex flex-col">
-  
+
   <!-- Header de la sala -->
   <div class="navbar bg-base-100 shadow-lg border-b border-base-300">
     <div class="navbar-start">
@@ -17,16 +17,13 @@
         </div>
       </div>
     </div>
-    
+
     <div class="navbar-end">
       <!-- Botón de configuración (solo para creadores) -->
-      <button 
-        *ngIf="isRoomCreator()" 
-        class="btn btn-ghost btn-circle"
-        title="Configurar sala">
+      <button *ngIf="isRoomCreator()" class="btn btn-ghost btn-circle" title="Configurar sala">
         ⚙️
       </button>
-      
+
       <!-- Botón de información -->
       <button class="btn btn-ghost btn-circle" title="Información de la sala">
         ℹ️
@@ -56,10 +53,10 @@
 
   <!-- Contenido principal -->
   <div *ngIf="!isLoadingRoom && !roomError" class="flex-1 flex flex-col">
-    
+
     <!-- Área de mensajes -->
     <div class="flex-1 overflow-y-auto p-4 messages-container">
-      
+
       <!-- Loading de mensajes -->
       <div *ngIf="isLoadingMessages" class="flex justify-center py-8">
         <div class="text-center">
@@ -72,31 +69,10 @@
       <div *ngIf="messagesError && !isLoadingMessages" class="text-center py-8">
         <div class="text-4xl mb-2">⚠️</div>
         <p class="text-base-content/70 mb-4">{{ messagesError }}</p>
-        <button class="btn btn-sm btn-outline" (click)="loadMessages()">
-          Reintentar
-        </button>
       </div>
 
       <!-- Lista de mensajes -->
       <div *ngIf="!isLoadingMessages && !messagesError">
-        
-        <!-- Botón cargar más mensajes -->
-        <div *ngIf="hasMoreMessages" class="text-center mb-4">
-          <button 
-            class="btn btn-sm btn-outline"
-            [class.loading]="isLoadingMoreMessages"
-            [disabled]="isLoadingMoreMessages"
-            (click)="loadMoreMessages()">
-            <span *ngIf="!isLoadingMoreMessages">⬆️ Cargar mensajes anteriores</span>
-            <span *ngIf="isLoadingMoreMessages">Cargando...</span>
-          </button>
-        </div>
-
-        <!-- Loading más mensajes -->
-        <div *ngIf="isLoadingMoreMessages" class="text-center mb-4">
-          <div class="loading loading-spinner loading-sm"></div>
-        </div>
-        
         <!-- Mensaje de bienvenida -->
         <div *ngIf="messages.length === 0" class="text-center py-12">
           <div class="text-6xl mb-4">💬</div>
@@ -105,18 +81,14 @@
         </div>
 
         <!-- Mensajes -->
-        <app-message
-          *ngFor="let message of messages; trackBy: trackByMessageId"
-          [message]="message"
-          [currentUser]="currentUser"
-          [isAuthor]="isMessageAuthor(message)">
+        <app-message *ngFor="let message of messages; trackBy: trackByMessageId" [message]="message"
+          [currentUser]="currentUser" [isAuthor]="isMessageAuthor(message)">
         </app-message>
       </div>
     </div>
 
     <!-- Formulario de chat -->
-    <app-chat-form 
-      (sendMessage)="onSendMessage($event)">
+    <app-chat-form (sendMessage)="onSendMessage($event)">
     </app-chat-form>
   </div>
 </div>

@@ -55,25 +55,29 @@ export interface SendMessageRequest {
 })
 export class MessageService {
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService) { }
 
   /**
    * Obtener mensajes de una sala
    */
-  getMessages(roomId: string, page: number = 1): Observable<ApiResponse<MessagesResponse>> {
-    return this.apiService.get<MessagesResponse>(`messages?room_id=${roomId}&page=${page}`);
+  getMessages(roomId: string, lastTimestamp?: string | null): Observable<ApiResponse<MessagesResponse>> {
+    let url = `messages?room_id=${roomId}`;
+    if (lastTimestamp) {
+      url += `&last_timestamp=${lastTimestamp}`;
+    }
+    return this.apiService.get<MessagesResponse>(url);
   }
 
   /**
    * Enviar mensaje de texto
    */
-  sendMessage(roomId: string, message: string, messageType: string = 'text'): Observable<ApiResponse<{message: Message}>> {
+  sendMessage(roomId: string, message: string, messageType: string = 'text'): Observable<ApiResponse<{ message: Message }>> {
     const requestData: SendMessageRequest = {
       room_id: roomId,
       message: message,
       message_type: messageType as 'text' | 'image' | 'file'
     };
-    
-    return this.apiService.post<{message: Message}>('messages', requestData);
+
+    return this.apiService.post<{ message: Message }>('messages', requestData);
   }
 }

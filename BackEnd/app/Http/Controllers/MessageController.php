@@ -19,13 +19,11 @@ class MessageController extends Controller
         try {
             $request->validate([
                 'room_id' => 'required|uuid|exists:rooms,id',
-                'page' => 'integer|min:1',
-                'limit' => 'integer|min:1|max:100'
+                'last_timestamp' => 'nullable|date'
             ]);
 
             $roomId = $request->room_id;
-            $page = $request->get('page', 1);
-            $limit = $request->get('limit', 20);
+            $lastTimestamp = $request->last_timestamp;
 
             // Verificar que el usuario esté en la sala
             $room = Room::findOrFail($roomId);
@@ -35,23 +33,29 @@ class MessageController extends Controller
                 return response()->json(['error' => 'No autorizado para acceder a esta sala'], 403);
             }
 
-            // Obtener mensajes con paginación
-            $messages = Message::with(['user:id,name'])
-                ->where('room_id', $roomId)
-                ->orderBy('created_at', 'desc')
-                ->paginate($limit, ['*'], 'page', $page);
+            // Consulta base
+            $query = Message::with(['user:id,name'])
+                ->where('room_id', $roomId);
+
+            // Filtrar por timestamp si se proporciona
+            if ($lastTimestamp) {
+                $query->where('created_at', '>', $lastTimestamp);
+            }
+
+            // Ordenar y obtener resultados
+            $messages = $query->orderBy('created_at', 'asc')->get();
+
+            // Obtener el último timestamp para la respuesta
+            $newLastTimestamp = null;
+            if ($messages->isNotEmpty()) {
+                $newLastTimestamp = $messages->last()->created_at->toISOString();
+            }
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'messages' => $messages->items(),
-                    'pagination' => [
-                        'current_page' => $messages->currentPage(),
-                        'last_page' => $messages->lastPage(),
-                        'per_page' => $messages->perPage(),
-                        'total' => $messages->total(),
-                        'has_more' => $messages->hasMorePages()
-                    ]
+                    'messages' => $messages,
+                    'last_timestamp' => $newLastTimestamp
                 ]
             ]);
         } catch (\Exception $e) {

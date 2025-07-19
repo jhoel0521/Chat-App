@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, interval } from 'rxjs';
+import { Subscription, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { AuthService, User } from '../../services/auth/auth.service';
 import { RoomService, Room } from '../../services/room/room.service';
@@ -27,19 +27,15 @@ export class RoomComponent implements OnInit, OnDestroy {
   // Estados de carga
   isLoadingRoom = true;
   isLoadingMessages = true;
-  isLoadingMoreMessages = false;
 
   // Errores
   roomError = '';
   messagesError = '';
 
-  // Polling de mensajes
+  // Sincronización por timestamp
+  private lastTimestamp: string | null = null;
   private pollingSubscription?: Subscription;
   private isPollingActive = false;
-
-  // Paginación
-  hasMoreMessages = false;
-  currentPage = 1;
 
   // Subscripciones
   private subscriptions: Subscription[] = [];
@@ -47,9 +43,9 @@ export class RoomComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private authService: AuthService,
-    private roomService: RoomService,
-    private messageService: MessageService
+    private authService: AuthService = inject(AuthService),
+    private roomService: RoomService = inject(RoomService),
+    private messageService: MessageService = inject(MessageService)
   ) { }
 
   ngOnInit(): void {
@@ -61,18 +57,38 @@ export class RoomComponent implements OnInit, OnDestroy {
       if (!user) this.router.navigate(['/login']);
 
       this.loadRoom();
-      this.startMessagePolling();
+      this.loadInitialMessages();
     });
   }
 
   ngOnDestroy(): void {
-    // Detener polling al salir
     this.stopMessagePolling();
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   /**
-   * Iniciar polling de mensajes HTTP
+   * Cargar mensajes iniciales
+   */
+  private loadInitialMessages(): void {
+    this.isLoadingMessages = true;
+    this.messageService.getMessages(this.roomId).subscribe({
+      next: (response) => {
+        if (response.data) {
+          this.processMessageResponse(response.data);
+          this.startMessagePolling();
+        }
+        this.isLoadingMessages = false;
+      },
+      error: (error) => {
+        this.isLoadingMessages = false;
+        this.messagesError = 'Error al cargar mensajes';
+        console.error('❌ Error loading initial messages:', error);
+      }
+    });
+  }
+
+  /**
+   * Iniciar polling de mensajes
    */
   private startMessagePolling(): void {
     if (this.isPollingActive) return;
@@ -80,24 +96,20 @@ export class RoomComponent implements OnInit, OnDestroy {
     console.log('🔄 Iniciando polling de mensajes cada', environment.polling.messagesInterval, 'ms');
     this.isPollingActive = true;
 
-    // Cargar mensajes inicialmente
-    this.loadMessages();
-
-    // Configurar polling automático
-    this.pollingSubscription = interval(environment.polling.messagesInterval)
-      .pipe(
-        switchMap(() => this.messageService.getMessages(this.roomId, 1))
-      )
-      .subscribe({
-        next: (response) => {
-          if (response.data) {
-            this.updateMessagesFromPolling(response.data);
-          }
-        },
-        error: (error) => {
-          console.error('❌ Error en polling de mensajes:', error);
+    this.pollingSubscription = timer(0, environment.polling.messagesInterval).pipe(
+      switchMap(() => this.messageService.getMessages(this.roomId, this.lastTimestamp))
+    ).subscribe({
+      next: (response) => {
+        if (response.data) {
+          this.processMessageResponse(response.data);
         }
-      });
+      },
+      error: (error) => {
+        console.error('❌ Error en polling de mensajes:', error);
+      }
+    });
+
+    this.subscriptions.push(this.pollingSubscription);
   }
 
   /**
@@ -113,49 +125,37 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Actualizar mensajes desde polling (evitar duplicados)
+   * Procesar respuesta de mensajes
    */
-  private updateMessagesFromPolling(data: MessagesResponse): void {
-    if (data.data && Array.isArray(data.data)) {
-      // Crear un mapa de mensajes existentes por ID
+  private processMessageResponse(data: any): void {
+    if (data.messages && Array.isArray(data.messages)) {
+      // Filtrar mensajes duplicados
       const existingIds = new Set(this.messages.map(m => m.id));
-      
-      // Filtrar solo mensajes nuevos
-      const newMessages = data.data.filter((msg: Message) => !existingIds.has(msg.id));
-      
+      const newMessages = data.messages.filter((msg: Message) => !existingIds.has(msg.id));
+
       if (newMessages.length > 0) {
-        console.log('� Nuevos mensajes detectados:', newMessages.length);
-        
-        // Agregar nuevos mensajes y ordenar por fecha
-        this.messages = [...this.messages, ...newMessages].sort((a, b) => 
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
-        
+        console.log(`📨 ${newMessages.length} nuevos mensajes recibidos`);
+        this.messages = [...this.messages, ...newMessages];
         this.scrollToBottom();
       }
-
-      // Actualizar paginación
-      this.hasMoreMessages = data.current_page < data.last_page;
+      // Actualizar timestamp para la próxima solicitud
+      if (data.last_timestamp) {
+        this.lastTimestamp = data.last_timestamp;
+      }
     }
   }
 
   /**
    * Cargar información de la sala
    */
-  loadRoom(): void {
+  public loadRoom(): void {
     this.isLoadingRoom = true;
-    this.roomError = '';
     this.roomService.getRoom(this.roomId).subscribe({
       next: (response: ApiResponse<Room>) => {
         this.isLoadingRoom = false;
-        if (response.data) {
-          this.room = response.data;
-        } else {
-          this.roomError = 'No se pudo cargar la información de la sala';
-          console.warn('⚠️ No se pudo cargar la sala');
-        }
+        this.room = response.data || null;
       },
-      error: (error: any) => {
+      error: (error) => {
         this.isLoadingRoom = false;
         this.roomError = 'Error al cargar la sala';
         console.error('❌ Error loading room:', error);
@@ -163,88 +163,23 @@ export class RoomComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Cargar mensajes por HTTP
-   */
-  loadMessages(): void {
-    this.isLoadingMessages = true;
-    this.messagesError = '';
-
-    console.log('📚 Cargando mensajes por HTTP...');
-
-    this.messageService.getMessages(this.roomId, this.currentPage).subscribe({
-      next: (response) => {
-        this.isLoadingMessages = false;
-        if (response.data) {
-          this.messages = response.data.data || [];
-          this.hasMoreMessages = response.data.current_page < response.data.last_page;
-          console.log('✅ Mensajes cargados:', this.messages.length);
-          this.scrollToBottom();
-        } else {
-          this.messagesError = 'No se pudieron cargar los mensajes';
-        }
-      },
-      error: (error: any) => {
-        this.isLoadingMessages = false;
-        this.messagesError = 'Error al cargar mensajes';
-        console.error('❌ Error loading messages:', error);
-      }
-    });
-  }
+  // ...eliminada lógica de paginación y carga de mensajes antiguos...
 
   /**
-   * Cargar más mensajes antiguos (paginación HTTP)
-   */
-  loadMoreMessages(): void {
-    if (!this.hasMoreMessages || this.isLoadingMoreMessages) return;
-
-    this.isLoadingMoreMessages = true;
-    this.currentPage++;
-    
-    console.log('📚 Cargando página', this.currentPage, 'de mensajes...');
-
-    this.messageService.getMessages(this.roomId, this.currentPage).subscribe({
-      next: (response) => {
-        this.isLoadingMoreMessages = false;
-        if (response.data) {
-          // Agregar mensajes antiguos al inicio
-          const olderMessages = response.data.data || [];
-          this.messages = [...olderMessages, ...this.messages];
-          
-          this.hasMoreMessages = response.data.current_page < response.data.last_page;
-          
-          console.log('✅ Más mensajes cargados. Total:', this.messages.length);
-        }
-      },
-      error: (error: any) => {
-        this.isLoadingMoreMessages = false;
-        this.currentPage--; // Revertir incremento en caso de error
-        console.error('❌ Error loading more messages:', error);
-      }
-    });
-  }
-
-  /**
-   * Enviar nuevo mensaje por HTTP
+   * Enviar nuevo mensaje
    */
   onSendMessage(messageData: ChatFormData): void {
     if (!this.currentUser) return;
 
-    console.log('📨 Enviando mensaje por HTTP:', messageData);
-
     this.messageService.sendMessage(this.roomId, messageData.message).subscribe({
       next: (response) => {
         if (response.data?.message) {
-          console.log('✅ Mensaje enviado correctamente');
-          
-          // Agregar el mensaje inmediatamente a la lista
+          // Agregar el mensaje localmente inmediatamente
           this.messages.push(response.data.message);
           this.scrollToBottom();
-        } else {
-          console.error('❌ Error en respuesta del mensaje:', response);
         }
       },
-      error: (error: any) => {
+      error: (error) => {
         console.error('❌ Error enviando mensaje:', error);
       }
     });
