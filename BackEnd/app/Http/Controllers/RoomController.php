@@ -159,7 +159,6 @@ class RoomController extends Controller
         ]);
 
         // Emitir evento WebSocket
-        broadcast(new UserJoinedRoom($room, $user));
 
         return response()->json([
             'success' => true,
@@ -204,7 +203,6 @@ class RoomController extends Controller
         ]);
 
         // Emitir evento WebSocket
-        broadcast(new UserLeftRoom($room, $user));
 
         return response()->json([
             'success' => true,
