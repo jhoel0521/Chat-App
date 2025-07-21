@@ -18,7 +18,7 @@ class RoomController extends Controller
     {
         $rooms = Room::with(['creator:id,name'])
             ->where('is_private', false)
-            ->withCount(['users' => function($query) {
+            ->withCount(['users' => function ($query) {
                 // Solo contar usuarios que no han abandonado la sala
                 $query->whereNull('abandonment_in');
             }])
@@ -42,14 +42,14 @@ class RoomController extends Controller
 
         // Salas donde el usuario es creador o está unido (no abandonadas)
         $rooms = Room::with(['creator:id,name'])
-            ->where(function($query) use ($userId) {
+            ->where(function ($query) use ($userId) {
                 $query->where('created_by', $userId)
-                      ->orWhereHas('users', function($q) use ($userId) {
-                          $q->where('room_user.user_id', $userId)
+                    ->orWhereHas('users', function ($q) use ($userId) {
+                        $q->where('room_user.user_id', $userId)
                             ->whereNull('room_user.abandonment_in');
-                      });
+                    });
             })
-            ->withCount(['users' => function($query) {
+            ->withCount(['users' => function ($query) {
                 $query->whereNull('abandonment_in');
             }])
             ->orderBy('created_at', 'desc')
@@ -117,6 +117,63 @@ class RoomController extends Controller
         return response()->json([
             'success' => true,
             'data' => $room
+        ]);
+    }
+    /**
+     *  Actualizar una sala existente
+     */
+    public function update(Request $request, Room $room): JsonResponse
+    {
+        // Verificar si el usuario es el creador de la sala
+        if ($room->created_by !== auth('api')->id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para actualizar esta sala'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'is_private' => 'boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Datos de validación incorrectos',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $room->update($request->only(['name', 'description', 'is_private']));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sala actualizada exitosamente',
+            'data' => $room->load('creator:id,name')
+        ]);
+    }
+    /**
+     * Eliminar una sala
+     */
+    public function destroy(Room $room): JsonResponse
+    {
+        // Verificar si el usuario es el creador de la sala
+        if ($room->created_by !== auth('api')->id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para eliminar esta sala'
+            ], 403);
+        }
+
+        // Eliminar la sala y sus relaciones
+        $room->users()->detach();
+        $room->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sala eliminada exitosamente'
         ]);
     }
 
