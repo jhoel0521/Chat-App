@@ -47,6 +47,7 @@ export class RoomService {
 
   /**
    * Obtener lista de salas públicas
+   * @return Observable con la respuesta de la API
    */
   getRooms(): Observable<RoomsResponse> {
     return this.apiService.get<RoomsResponse>('rooms').pipe(
@@ -61,6 +62,7 @@ export class RoomService {
 
   /**
    * Obtener mis salas (donde soy creador o estoy unido)
+   * @return Observable con la respuesta de la API
    */
   getMyRooms(): Observable<RoomsResponse> {
     return this.apiService.get<RoomsResponse>('my-rooms').pipe(
@@ -76,6 +78,8 @@ export class RoomService {
 
   /**
    * Obtener detalles de una sala específica
+   * @param roomId ID de la sala
+   * @return Observable con la respuesta de la API
    */
   getRoom(roomId: string): Observable<ApiResponse<Room>> {
     return this.apiService.get<Room>(`rooms/${roomId}`);
@@ -83,6 +87,8 @@ export class RoomService {
 
   /**
    * Crear nueva sala
+   * @param roomData Datos de la sala a crear
+   * @return Observable con la respuesta de la API
    */
   createRoom(roomData: CreateRoomRequest): Observable<ApiResponse<Room>> {
     return this.apiService.post<Room>('rooms', roomData);
@@ -90,6 +96,8 @@ export class RoomService {
 
   /**
    * Actualizar una sala existente
+   * @param roomId ID de la sala a actualizar
+   * @param roomData Datos a actualizar
    */
   updateRoom(roomId: string, roomData: Partial<CreateRoomRequest>): Observable<ApiResponse<Room>> {
     return this.apiService.put<Room>(`rooms/${roomId}`, roomData);
@@ -97,13 +105,17 @@ export class RoomService {
 
   /**
    * Unirse a una sala
+   * @param roomId ID de la sala a la que unirse
+   * @return Observable con la respuesta de la API
    */
-  joinRoom(roomId: string, joinData?: JoinRoomRequest): Observable<ApiResponse<any>> {
-    return this.apiService.post(`rooms/${roomId}/join`, joinData || {});
+  joinRoom(roomId: string): Observable<ApiResponse<any>> {
+    return this.apiService.post(`rooms/${roomId}/join`);
   }
 
   /**
    * Abandonar una sala
+   * @param roomId ID de la sala a abandonar
+   * @return Observable con la respuesta de la API
    */
   leaveRoom(roomId: string): Observable<ApiResponse<any>> {
     return this.apiService.post(`rooms/${roomId}/leave`);
@@ -111,6 +123,8 @@ export class RoomService {
 
   /**
    * Obtener salas más populares (ordenadas por actividad)
+   * @param limit Número máximo de salas a obtener
+   * @returns Observable con la respuesta de la API
    */
   getPopularRooms(limit: number = 10): Observable<ApiResponse<Room[]>> {
     return this.apiService.get<Room[]>(`rooms?limit=${limit}&sort=popular`);
@@ -118,8 +132,18 @@ export class RoomService {
 
   /**
    * Buscar salas por nombre
+   * @param query Término de búsqueda
+   * @returns Observable con la respuesta de la API
    */
   searchRooms(query: string): Observable<ApiResponse<Room[]>> {
     return this.apiService.get<Room[]>(`rooms?search=${encodeURIComponent(query)}`);
+  }
+  /**
+   * Eliminar una sala
+   * @param roomId ID de la sala a eliminar
+   * @returns Observable con la respuesta de la API
+   */
+  deleteRoom(roomId: string): Observable<ApiResponse<any>> {
+    return this.apiService.delete(`rooms/${roomId}`);
   }
 }

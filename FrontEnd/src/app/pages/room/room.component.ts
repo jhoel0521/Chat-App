@@ -1,10 +1,11 @@
-import { Component, OnInit, OnDestroy, inject, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { AuthService, User } from '../../services/auth/auth.service';
-import { RoomService, Room } from '../../services/room/room.service';
+import { RoomService, Room, CreateRoomRequest } from '../../services/room/room.service';
 import { MessageService, Message } from '../../services/message/message.service';
 import { ChatHeaderComponent } from '../../components/chat-header/chat-header.component';
 import { MessagesListComponent } from '../../components/messages-list/messages-list.component';
@@ -15,15 +16,25 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-room',
   standalone: true,
-  imports: [CommonModule, ChatHeaderComponent, MessagesListComponent, MessageInputComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ChatHeaderComponent,
+    MessagesListComponent,
+    MessageInputComponent
+  ],
   templateUrl: './room.component.html',
   styleUrl: './room.component.css'
 })
 export class RoomComponent implements OnInit, OnDestroy {
+  @ViewChild('renameModal') renameModal!: ElementRef<HTMLDialogElement>;
+  @ViewChild('infoModal') infoModal!: ElementRef<HTMLDialogElement>;
+
   roomId: string = '';
   room: Room | null = null;
   currentUser: User | null = null;
   messages: Message[] = [];
+  newRoomName: string = '';
 
   // Estados de carga
   isLoadingRoom = true;
@@ -158,6 +169,7 @@ export class RoomComponent implements OnInit, OnDestroy {
       next: (response: ApiResponse<Room>) => {
         this.isLoadingRoom = false;
         this.room = response.data || null;
+        console.log('Sala cargada:', this.room);
       },
       error: (error) => {
         this.isLoadingRoom = false;
@@ -166,8 +178,6 @@ export class RoomComponent implements OnInit, OnDestroy {
       }
     });
   }
-
-  // ...eliminada lógica de paginación y carga de mensajes antiguos...
 
   /**
    * Enviar nuevo mensaje
@@ -180,7 +190,7 @@ export class RoomComponent implements OnInit, OnDestroy {
         if (response.data?.message) {
           // Agregar el mensaje localmente inmediatamente
           this.messages.push(response.data.message);
-          
+
           // Hacer scroll al final después de un breve delay para que el DOM se actualice
           setTimeout(() => {
             this.scrollToBottom();
@@ -228,5 +238,106 @@ export class RoomComponent implements OnInit, OnDestroy {
    */
   trackByMessageId(index: number, message: Message): string {
     return message.id;
+  }
+
+  /**
+   * Abrir modal de renombrar sala
+   */
+  openRenameModal(): void {
+    if (this.room) {
+      this.newRoomName = this.room.name;
+      this.renameModal.nativeElement.showModal();
+    }
+  }
+
+  /**
+   * Renombrar sala
+   */
+  renameRoom(): void {
+    if (!this.room || !this.newRoomName.trim()) return;
+
+    const updateData: Partial<CreateRoomRequest> = {
+      name: this.newRoomName
+    };
+
+    this.roomService.updateRoom(this.roomId, updateData).subscribe({
+      next: (response: ApiResponse<Room>) => {
+        if (response.data) {
+          this.room = response.data;
+          this.renameModal.nativeElement.close();
+        }
+      },
+      error: (error) => {
+        console.error('Error renaming room:', error);
+        alert('Error al renombrar la sala');
+      }
+    });
+  }
+
+  /**
+   * Copiar enlace de invitación
+   */
+  copyInviteLink(): void {
+    const roomUrl = this.getInviteLink();
+    navigator.clipboard.writeText(roomUrl).then(() => {
+      alert('¡Enlace copiado al portapapeles!');
+    }).catch(err => {
+      console.error('Error al copiar el enlace:', err);
+      alert('Error al copiar el enlace');
+    });
+  }
+
+  /**
+   * Obtener enlace de invitación
+   */
+  getInviteLink(): string {
+    return `${window.location.origin}/rooms/${this.roomId}`;
+  }
+
+  /**
+   * Abrir modal de información
+   */
+  openInfoModal(): void {
+    this.infoModal.nativeElement.showModal();
+  }
+
+  /**
+   * Abrir configuración de sala (editar)
+   */
+  openSettings(): void {
+    this.router.navigate(['/rooms/edit', this.roomId]);
+  }
+
+  /**
+   * Eliminar sala
+   */
+  deleteRoom(): void {
+    if (confirm('¿Estás seguro de que deseas eliminar esta sala? Esta acción no se puede deshacer.')) {
+      this.roomService.deleteRoom(this.roomId).subscribe({
+        next: () => {
+          this.router.navigate(['/dashboard']);
+        },
+        error: (error) => {
+          console.error('Error deleting room:', error);
+          alert('Error al eliminar la sala');
+        }
+      });
+    }
+  }
+  /**
+   * 
+   */
+  leaveRoom(): void {
+    if (this.room) {
+      this.roomService.leaveRoom(this.room.id).subscribe({
+        next: () => {
+          this.router.navigate(['/dashboard']);
+        },
+        error: (error) => {
+          console.error('Error leaving room:', error);
+          alert('Error al salir de la sala');
+        }
+      });
+    }
   }
 }

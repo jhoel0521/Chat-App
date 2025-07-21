@@ -1,25 +1,124 @@
-<div class="h-screen flex flex-col bg-slate-900">
-  <!-- Chat Header - Fijo arriba -->
-  <app-chat-header 
-    [room]="room" 
-    [showBackButton]="true"
-    (onBack)="goBack()">
-  </app-chat-header>
+<div class="min-h-screen bg-base-100 flex flex-col">
+
+  <!-- Header de la sala - Con menú de acciones -->
+  <div class="navbar bg-base-200 shadow-lg border-b border-base-300">
+    <div class="navbar-start">
+      <button class="btn btn-ghost btn-circle bg-base-100 border border-base-300" (click)="goBack()">
+        ←
+      </button>
+      <div class="ml-3">
+        <h1 class="text-xl font-bold text-base-content">
+          {{ room?.name || 'Cargando...' }}
+        </h1>
+        <div class="text-sm opacity-90 text-base-content">
+          <span *ngIf="room?.users_count">{{ room?.users_count ?? 0 }} usuarios</span>
+          <span *ngIf="room?.is_private" class="ml-2 badge badge-warning badge-sm">🔒 Privada</span>
+          <span *ngIf="!room?.is_private" class="ml-2 badge badge-success badge-sm">🌍 Pública</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="navbar-end">
+      <!-- Menú de acciones para el creador -->
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle text-base-content">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+          </svg>
+        </div>
+        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li *ngIf="isRoomCreator()"><a (click)="openRenameModal()">✏️ Renombrar sala</a></li>
+          <li><a (click)="copyInviteLink()">📋 Copiar enlace</a></li>
+          <li *ngIf="isRoomCreator()"><a (click)="openSettings()">⚙️ Configuración</a></li>
+          <li *ngIf="isRoomCreator()"><a class="text-error" (click)="deleteRoom()">🗑️ Eliminar sala</a></li>
+          <li *ngIf="!isRoomCreator()"><a (click)="leaveRoom()">🚪 Salir de la sala</a></li>
+          <li ><a (click)="openInfoModal()">ℹ️ Información de la sala</a></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal para renombrar sala -->
+  <dialog #renameModal class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg">Renombrar sala</h3>
+      <div class="py-4">
+        <input type="text" placeholder="Nuevo nombre" class="input input-bordered w-full" [(ngModel)]="newRoomName" />
+      </div>
+      <div class="modal-action">
+        <button class="btn" (click)="renameModal.close()">Cancelar</button>
+        <button class="btn btn-primary" (click)="renameRoom()">Guardar</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button (click)="renameModal.close()">close</button>
+    </form>
+  </dialog>
+
+  <!-- Modal de información de sala -->
+  <dialog #infoModal class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg">Información de la sala</h3>
+      <div class="py-4 space-y-4">
+        <div>
+          <h4 class="font-semibold">Nombre</h4>
+          <p>{{ room?.name }}</p>
+        </div>
+
+        <div>
+          <h4 class="font-semibold">Tipo</h4>
+          <p>{{ room?.is_private ? '🔒 Privada' : '🌍 Pública' }}</p>
+        </div>
+
+        <div>
+          <h4 class="font-semibold">Creada por</h4>
+          <p>{{ room?.creator?.name || 'Desconocido' }}</p>
+        </div>
+
+        <div>
+          <h4 class="font-semibold">Fecha de creación</h4>
+          <p>{{ room?.created_at | date:'medium' }}</p>
+        </div>
+
+        <div *ngIf="room?.is_private">
+          <h4 class="font-semibold">Enlace de invitación</h4>
+          <div class="flex mt-2">
+            <input type="text" class="input input-bordered flex-1" [value]="getInviteLink()" readonly>
+            <button class="btn btn-outline ml-2" (click)="copyInviteLink()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-action">
+        <button class="btn" (click)="infoModal.close()">Cerrar</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button (click)="infoModal.close()">close</button>
+    </form>
+  </dialog>
 
   <!-- Loading de sala -->
-  <div *ngIf="isLoadingRoom" class="flex-1 flex items-center justify-center">
-    <div class="text-center">
+  <div *ngIf="isLoadingRoom" class="flex-1 flex items-center justify-center bg-base-200">
+    <div class="text-center p-8 bg-base-100 rounded-box shadow-lg border border-base-300">
       <div class="loading loading-spinner loading-lg text-primary"></div>
-      <div class="mt-4 text-lg text-slate-300">Cargando sala...</div>
+      <div class="mt-4 text-lg text-base-content">Cargando sala...</div>
     </div>
   </div>
 
   <!-- Error de sala -->
-  <div *ngIf="roomError && !isLoadingRoom" class="flex-1 flex items-center justify-center">
-    <div class="text-center p-8 bg-slate-800 rounded-box shadow-lg border border-slate-700 max-w-md">
+  <div *ngIf="roomError && !isLoadingRoom" class="flex-1 flex items-center justify-center bg-base-200">
+    <div class="text-center p-8 bg-base-100 rounded-box shadow-lg border border-base-300 max-w-md">
       <div class="text-6xl mb-4 text-error">❌</div>
-      <h2 class="text-2xl font-bold mb-2 text-white">Error al cargar la sala</h2>
-      <p class="text-slate-300 mb-6">{{ roomError }}</p>
+      <h2 class="text-2xl font-bold mb-2 text-base-content">Error al cargar la sala</h2>
+      <p class="text-base-content/90 mb-6">{{ roomError }}</p>
       <button class="btn btn-primary" (click)="loadRoom()">
         Reintentar
       </button>
@@ -29,17 +128,12 @@
   <!-- Contenido principal -->
   <div *ngIf="!isLoadingRoom && !roomError" class="flex-1 flex flex-col min-h-0">
     <!-- Messages List - Con scroll interno -->
-    <app-messages-list 
-      class="flex-1 min-h-0"
-      [messages]="messages"
-      [currentUser]="currentUser"
+    <app-messages-list class="flex-1 min-h-0" [messages]="messages" [currentUser]="currentUser"
       [loading]="isLoadingMessages">
     </app-messages-list>
 
     <!-- Message Input - Fijo abajo -->
-    <app-message-input 
-      [disabled]="isLoadingMessages"
-      (sendMessage)="onSendMessage($event)">
+    <app-message-input [disabled]="isLoadingMessages" (sendMessage)="onSendMessage($event)">
     </app-message-input>
   </div>
 </div>
