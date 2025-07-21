@@ -35,9 +35,8 @@ export class MessagesListComponent implements AfterViewChecked, OnChanges {
 
   private scrollToBottom(): void {
     try {
-      if (this.scrollArea) {
-        const scrollContainer = this.scrollArea.nativeElement;
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      if (this.messagesEnd) {
+        this.messagesEnd.nativeElement.scrollIntoView({ behavior: 'auto', block: 'end' });
       }
     } catch (err) {
       console.error('Error scrolling to bottom:', err);

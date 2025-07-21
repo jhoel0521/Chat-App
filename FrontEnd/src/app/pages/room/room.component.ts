@@ -189,12 +189,14 @@ export class RoomComponent implements OnInit, OnDestroy {
       next: (response) => {
         if (response.data?.message) {
           // Agregar el mensaje localmente inmediatamente
-          this.messages.push(response.data.message);
+          this.messages = [...this.messages, response.data.message];
 
-          // Hacer scroll al final después de un breve delay para que el DOM se actualice
+          // Forzar scroll al fondo después de actualizar el array
           setTimeout(() => {
-            this.scrollToBottom();
-          }, 100);
+            if (this.messagesListComponent) {
+              this.messagesListComponent.scrollToBottomNow();
+            }
+          }, 150);
         }
       },
       error: (error) => {
