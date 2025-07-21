@@ -1,3 +1,4 @@
+
 .room-container {
   height: 100vh;
   display: flex;
@@ -6,32 +7,35 @@
 }
 
 /* Área de mensajes - Scroll mejorado */
-#messages-container {
-  display: flex;
-  flex-direction: column-reverse;
-  /* Nuevos mensajes abajo */
+
+app-messages-list {
+  flex: 1 1 auto;
   min-height: 0;
-}
-
-#messages-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-#messages-container::-webkit-scrollbar-track {
-  background: var(--fallback-b2, oklch(var(--b2)));
-  border-radius: 4px;
-}
-
-#messages-container::-webkit-scrollbar-thumb {
-  background: var(--fallback-bc, oklch(var(--bc) / 0.4));
-  border-radius: 4px;
-}
-
-#messages-container::-webkit-scrollbar-thumb:hover {
-  background: var(--fallback-bc, oklch(var(--bc) / 0.6));
+  overflow-y: auto;
 }
 
 /* Header de la sala - Mejor contraste */
+#roomHeader {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+app-messages-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.room-input {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background: var(--fallback-b2, oklch(var(--b2)));
+}
+
 .room-header {
   background: var(--fallback-b2, oklch(var(--b2)));
   border-bottom: 1px solid var(--fallback-b3, oklch(var(--b3)));
@@ -85,10 +89,6 @@
 
 /* Animaciones */
 .room-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--fallback-b1, oklch(var(--b1)));
   animation: fadeIn 0.3s ease-out;
 }
 

@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-base-100 flex flex-col">
 
   <!-- Header de la sala - Con menú de acciones -->
-  <div class="navbar bg-base-200 shadow-lg border-b border-base-300">
+  <div id="roomHeader" class="room-header navbar bg-base-200 shadow-lg border-b border-base-300">
     <div class="navbar-start">
       <button class="btn btn-ghost btn-circle bg-base-100 border border-base-300" (click)="goBack()">
         ←
@@ -33,7 +33,7 @@
           <li *ngIf="isRoomCreator()"><a (click)="openSettings()">⚙️ Configuración</a></li>
           <li *ngIf="isRoomCreator()"><a class="text-error" (click)="deleteRoom()">🗑️ Eliminar sala</a></li>
           <li *ngIf="!isRoomCreator()"><a (click)="leaveRoom()">🚪 Salir de la sala</a></li>
-          <li ><a (click)="openInfoModal()">ℹ️ Información de la sala</a></li>
+          <li><a (click)="openInfoModal()">ℹ️ Información de la sala</a></li>
         </ul>
       </div>
 
@@ -129,11 +129,12 @@
   <div *ngIf="!isLoadingRoom && !roomError" class="flex-1 flex flex-col min-h-0">
     <!-- Messages List - Con scroll interno -->
     <app-messages-list class="flex-1 min-h-0" [messages]="messages" [currentUser]="currentUser"
-      [loading]="isLoadingMessages">
-    </app-messages-list>
+      [loading]="isLoadingMessages"></app-messages-list>
 
-    <!-- Message Input - Fijo abajo -->
-    <app-message-input [disabled]="isLoadingMessages" (sendMessage)="onSendMessage($event)">
-    </app-message-input>
+    <!-- Input fijo abajo -->
+    <app-message-input class="room-input" [disabled]="isLoadingMessages"
+      (sendMessage)="onSendMessage($event)"></app-message-input>
+
+
   </div>
 </div>

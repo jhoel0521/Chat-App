@@ -6,20 +6,27 @@
   min-height: 0;
 }
 
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
 /* Scroll personalizado para Webkit */
 .overflow-y-auto::-webkit-scrollbar {
   width: 8px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-  background: #1e293b; /* slate-800 */
+  background: #1e293b;
+  /* slate-800 */
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #475569; /* slate-600 */
+  background: #475569;
+  /* slate-600 */
   border-radius: 4px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #64748b; /* slate-500 */
+  background: #64748b;
+  /* slate-500 */
 }
