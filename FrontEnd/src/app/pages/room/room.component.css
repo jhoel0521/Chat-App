@@ -1,4 +1,3 @@
-
 .room-container {
   height: 100vh;
   display: flex;
@@ -33,11 +32,9 @@ app-messages-list {
   position: sticky;
   bottom: 0;
   z-index: 10;
-  background: var(--fallback-b2, oklch(var(--b2)));
 }
 
 .room-header {
-  background: var(--fallback-b2, oklch(var(--b2)));
   border-bottom: 1px solid var(--fallback-b3, oklch(var(--b3)));
   padding: 1rem;
   flex-shrink: 0;
