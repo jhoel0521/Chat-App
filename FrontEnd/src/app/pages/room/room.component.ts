@@ -7,7 +7,6 @@ import { switchMap } from 'rxjs/operators';
 import { AuthService, User } from '../../services/auth/auth.service';
 import { RoomService, Room, CreateRoomRequest } from '../../services/room/room.service';
 import { MessageService, Message } from '../../services/message/message.service';
-import { ChatHeaderComponent } from '../../components/chat-header/chat-header.component';
 import { MessagesListComponent } from '../../components/messages-list/messages-list.component';
 import { MessageInputComponent, MessageInputData } from '../../components/message-input/message-input.component';
 import { ApiResponse } from '../../services/api';
@@ -19,7 +18,6 @@ import { environment } from '../../../environments/environment';
   imports: [
     CommonModule,
     FormsModule,
-    ChatHeaderComponent,
     MessagesListComponent,
     MessageInputComponent
   ],
