@@ -32,11 +32,18 @@ class UserController extends Controller
     {
         $userId = auth('api')->id();
         $user = User::findOrFail($userId);
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|email|unique:users,email,' . $user->id
-        ]);
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'name' => 'required|string|max:255',
+                'email' => 'nullable|email|unique:users,email,' . $user->id
+            ],
+            [
+                'name.required' => 'El nombre es obligatorio',
+                'email.email' => 'El email debe ser una dirección de correo válida',
+                'email.unique' => 'El email ya está en uso'
+            ]
+        );
 
         if ($validator->fails()) {
             return response()->json([
