@@ -192,18 +192,27 @@ class RoomController extends Controller
             ], 404);
         }
 
-        // Verificar si ya está en la sala
-        if ($room->hasUser($user->id)) {
+        // Verificar si el usuario ya está activo en la sala
+        if ($room->isUserActive($user->id)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ya estás en esta sala'
             ], 400);
         }
 
-        // Unirse a la sala
-        $room->users()->attach($user->id, [
-            'joined_at' => now()
-        ]);
+        // Verificar si el usuario abandonó previamente
+        if ($room->hasAbandonedUser($user->id)) {
+            // Reactivar la membresía
+            $room->users()->updateExistingPivot($user->id, [
+                'abandonment_in' => null,
+                'joined_at' => now() // Opcional: actualizar la fecha de ingreso
+            ]);
+        } else {
+            // Unirse por primera vez
+            $room->users()->attach($user->id, [
+                'joined_at' => now()
+            ]);
+        }
 
         // Crear mensaje del sistema
         Message::create([
@@ -212,8 +221,6 @@ class RoomController extends Controller
             'message' => "{$user->name} se unió a la sala",
             'message_type' => 'system',
         ]);
-
-        // Emitir evento WebSocket
 
         return response()->json([
             'success' => true,

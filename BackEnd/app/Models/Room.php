@@ -30,7 +30,7 @@ class Room extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'room_user')
-                    ->withPivot(['joined_at', 'abandonment_in']);
+            ->withPivot(['joined_at', 'abandonment_in']);
     }
 
     /**
@@ -55,9 +55,9 @@ class Room extends Model
     public function latestMessages($limit = 50)
     {
         return $this->messages()
-                    ->with(['user', 'files'])
-                    ->latest()
-                    ->limit($limit);
+            ->with(['user', 'files'])
+            ->latest()
+            ->limit($limit);
     }
 
     /**
@@ -66,5 +66,21 @@ class Room extends Model
     public function hasUser($userId): bool
     {
         return $this->users()->where('user_id', $userId)->exists();
+    }
+
+    public function isUserActive($userId)
+    {
+        return $this->users()
+            ->where('user_id', $userId)
+            ->whereNull('abandonment_in')
+            ->exists();
+    }
+
+    public function hasAbandonedUser($userId)
+    {
+        return $this->users()
+            ->where('user_id', $userId)
+            ->whereNotNull('abandonment_in')
+            ->exists();
     }
 }
