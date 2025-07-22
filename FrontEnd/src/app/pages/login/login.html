@@ -1,25 +1,26 @@
 <div class="min-h-screen hero bg-base-200">
     <div class="hero-content flex-col lg:flex-row-reverse">
         <!-- Información de la app -->
-        <div class="text-center lg:text-left lg:ml-8">
-            <h1 class="text-5xl font-bold">Chat App 💬</h1>
-            <p class="py-6 text-lg">
-                Únete a salas de chat en tiempo real. Chatea con usuarios registrados o como invitado.
-                <span class="badge badge-primary">Laravel + Angular</span>
+        <div class="text-center lg:text-left lg:ml-8 max-w-lg">
+            <h1 class="text-5xl font-extrabold mb-6 text-primary">
+                Chat App 💬
+            </h1>
+
+            <p class="mb-4 text-lg leading-relaxed text-gray-700 dark:text-gray-300">
+                Únete a salas de chat en <strong>tiempo real</strong>. Chatea con usuarios registrados o como invitado.
             </p>
-            <div class="stats stats-vertical lg:stats-horizontal shadow">
-                <div class="stat">
-                    <div class="stat-title">Tecnologías</div>
-                    <div class="stat-value text-2xl">Angular 20</div>
-                    <div class="stat-desc">Frontend moderno</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-title">Backend</div>
-                    <div class="stat-value text-2xl">Laravel 12</div>
-                    <div class="stat-desc">API REST + WebSockets</div>
-                </div>
-            </div>
+
+            <span
+                class="inline-block mb-6 px-3 py-1 text-sm font-semibold rounded-full bg-primary text-primary-content shadow-md">
+                Laravel + Angular
+            </span>
+
+            <p class="text-sm italic text-gray-500 dark:text-gray-400">
+                Nota: Este chat usa <strong>polling</strong> para actualizar mensajes periódicamente en lugar de
+                <strong>WebSockets</strong>.
+            </p>
         </div>
+
 
         <!-- Formularios de autenticación -->
         <div class="card w-full max-w-md shadow-2xl bg-base-100">
