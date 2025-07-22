@@ -34,6 +34,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         'Authorization': `Bearer ${token}`
       }
     });
+  } else {
+    console.warn('la ruta está excluida del token:', req.url);
+    console.warn('view valor isExcludedRoute:', isExcludedRoute);
   }
 
   return next(authReq);
