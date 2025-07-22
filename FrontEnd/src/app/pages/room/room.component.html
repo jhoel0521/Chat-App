@@ -30,7 +30,6 @@
         <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
           <li *ngIf="isRoomCreator()"><a (click)="openRenameModal()">✏️ Renombrar sala</a></li>
           <li><a (click)="copyInviteLink()">📋 Copiar enlace</a></li>
-          <li *ngIf="isRoomCreator()"><a (click)="openSettings()">⚙️ Configuración</a></li>
           <li *ngIf="isRoomCreator()"><a class="text-error" (click)="deleteRoom()">🗑️ Eliminar sala</a></li>
           <li *ngIf="!isRoomCreator()"><a (click)="leaveRoom()">🚪 Salir de la sala</a></li>
           <li><a (click)="openInfoModal()">ℹ️ Información de la sala</a></li>

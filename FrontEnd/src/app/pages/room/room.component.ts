@@ -11,6 +11,7 @@ import { MessagesListComponent } from '../../components/messages-list/messages-l
 import { MessageInputComponent, MessageInputData } from '../../components/message-input/message-input.component';
 import { ApiResponse } from '../../services/api';
 import { environment } from '../../../environments/environment';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-room',
@@ -275,15 +276,53 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Eliminar sala
+   */
+  async deleteRoom(): Promise<void> {
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Esta acción no se puede deshacer. La sala será eliminada permanentemente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+    });
+    if (result.isConfirmed) {
+      this.roomService.deleteRoom(this.roomId).subscribe({
+        next: () => {
+          Swal.fire('Eliminada', 'La sala ha sido eliminada.', 'success');
+          this.router.navigate(['/dashboard']);
+        },
+        error: (error) => {
+          console.error('Error deleting room:', error);
+          Swal.fire('Error', 'Error al eliminar la sala', 'error');
+        }
+      });
+    }
+  }
+
+  /**
    * Copiar enlace de invitación
    */
   copyInviteLink(): void {
     const roomUrl = this.getInviteLink();
     navigator.clipboard.writeText(roomUrl).then(() => {
-      alert('¡Enlace copiado al portapapeles!');
+      Swal.fire({
+        icon: 'success',
+        title: '¡Enlace copiado!',
+        text: 'El enlace de invitación ha sido copiado al portapapeles.',
+        timer: 1800,
+        showConfirmButton: false
+      });
     }).catch(err => {
       console.error('Error al copiar el enlace:', err);
-      alert('Error al copiar el enlace');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al copiar el enlace',
+      });
     });
   }
 
@@ -308,22 +347,6 @@ export class RoomComponent implements OnInit, OnDestroy {
     this.router.navigate(['/rooms/edit', this.roomId]);
   }
 
-  /**
-   * Eliminar sala
-   */
-  deleteRoom(): void {
-    if (confirm('¿Estás seguro de que deseas eliminar esta sala? Esta acción no se puede deshacer.')) {
-      this.roomService.deleteRoom(this.roomId).subscribe({
-        next: () => {
-          this.router.navigate(['/dashboard']);
-        },
-        error: (error) => {
-          console.error('Error deleting room:', error);
-          alert('Error al eliminar la sala');
-        }
-      });
-    }
-  }
   /**
    * 
    */
