@@ -29,8 +29,8 @@
       <div *ngIf="!isAuthor" class="text-xs text-slate-300 mb-1">{{ getUserName() }}</div>
       
       <!-- Message text -->
-      <div class="text-sm">{{ message.message }}</div>
-      
+      <div class="text-sm content-message">{{ message.message }}</div>
+
       <!-- File attachment (if any) -->
       <div *ngIf="hasFile()" class="mt-2">
         <div *ngIf="isImageFile()" class="max-w-xs">
