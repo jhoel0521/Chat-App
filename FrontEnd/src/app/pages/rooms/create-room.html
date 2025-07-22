@@ -21,7 +21,7 @@
 
   <!-- Main Content -->
   <div class="container mx-auto px-4 py-8 max-w-2xl">
-    
+
     <!-- Form Card -->
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body">
@@ -32,23 +32,27 @@
 
         <!-- Success Message -->
         <div *ngIf="successMessage" class="alert alert-success mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span>{{ successMessage }}</span>
         </div>
 
         <!-- Error Message -->
         <div *ngIf="errorMessage" class="alert alert-error mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span>{{ errorMessage }}</span>
         </div>
 
         <!-- Form -->
         <form (ngSubmit)="onCreateRoom()" #roomForm="ngForm">
-          
+
           <!-- Room Name -->
           <div class="form-control w-full mb-4">
             <label class="label">
@@ -57,14 +61,8 @@
               </span>
               <span class="label-text-alt">{{ roomData.name.length || 0 }}/50</span>
             </label>
-            <input 
-              type="text" 
-              placeholder="Ej: Sala de Programadores, Gamers Unidos, etc."
-              class="input input-bordered w-full" 
-              [(ngModel)]="roomData.name"
-              name="name"
-              required
-              maxlength="50"
+            <input type="text" placeholder="Ej: Sala de Programadores, Gamers Unidos, etc."
+              class="input input-bordered w-full" [(ngModel)]="roomData.name" name="name" required maxlength="50"
               [class.input-error]="roomData.name.length > 50">
             <label class="label">
               <span class="label-text-alt text-base-content/60">
@@ -79,12 +77,9 @@
               <span class="label-text font-semibold">Descripción (Opcional)</span>
               <span class="label-text-alt">{{ roomData.description?.length || 0 }}/200</span>
             </label>
-            <textarea 
-              class="textarea textarea-bordered h-24" 
-              placeholder="Describe brevemente de qué se trata tu sala..."
-              [(ngModel)]="roomData.description"
-              name="description"
-              maxlength="200"
+            <textarea class="textarea textarea-bordered h-24"
+              placeholder="Describe brevemente de qué se trata tu sala..." [(ngModel)]="roomData.description"
+              name="description" maxlength="200"
               [class.textarea-error]="roomData.description && roomData.description.length > 200"></textarea>
           </div>
 
@@ -98,11 +93,7 @@
                 <span *ngIf="!roomData.is_private">🌍 Sala Pública</span>
                 <span *ngIf="roomData.is_private">🔒 Sala Privada</span>
               </span>
-              <input 
-                type="checkbox" 
-                class="toggle toggle-primary" 
-                [(ngModel)]="roomData.is_private"
-                name="is_private">
+              <input type="checkbox" class="toggle toggle-primary" [(ngModel)]="roomData.is_private" name="is_private">
             </label>
             <label class="label">
               <span class="label-text-alt text-base-content/60">
@@ -113,16 +104,13 @@
           </div>
 
           <!-- Allow Anonymous Users -->
-          <div class="form-control mb-6">
+          <div style="display: none;">
             <label class="label cursor-pointer">
               <span class="label-text font-semibold">
                 <span *ngIf="roomData.allow_anonymous">👥 Permitir Usuarios Anónimos</span>
                 <span *ngIf="!roomData.allow_anonymous">🔐 Solo Usuarios Registrados</span>
               </span>
-              <input 
-                type="checkbox" 
-                class="toggle toggle-secondary" 
-                [(ngModel)]="roomData.allow_anonymous"
+              <input type="checkbox" class="toggle toggle-secondary" [(ngModel)]="roomData.allow_anonymous"
                 name="allow_anonymous">
             </label>
             <label class="label">
@@ -135,24 +123,13 @@
 
           <!-- Action Buttons -->
           <div class="card-actions justify-end">
-            <button 
-              type="button" 
-              class="btn btn-outline"
-              (click)="onReset()"
-              [disabled]="isLoading">
+            <button type="button" class="btn btn-outline" (click)="onReset()" [disabled]="isLoading">
               🔄 Limpiar
             </button>
-            <button 
-              type="button" 
-              class="btn btn-ghost"
-              (click)="onCancel()"
-              [disabled]="isLoading">
+            <button type="button" class="btn btn-ghost" (click)="onCancel()" [disabled]="isLoading">
               ❌ Cancelar
             </button>
-            <button 
-              type="submit" 
-              class="btn btn-primary"
-              [class.loading]="isLoading"
+            <button type="submit" class="btn btn-primary" [class.loading]="isLoading"
               [disabled]="isLoading || !roomData.name.trim()">
               <span *ngIf="!isLoading">🚀 Crear Sala</span>
               <span *ngIf="isLoading">Creando...</span>
