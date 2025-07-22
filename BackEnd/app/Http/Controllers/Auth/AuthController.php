@@ -39,12 +39,14 @@ class AuthController extends Controller
         ]);
 
         $token = JWTAuth::fromUser($user);
+        $ttl = config('jwt.ttl') * 60;
 
         return response()->json([
             'success' => true,
             'message' => 'Usuario registrado exitosamente',
             'user' => $user,
             'token' => $token,
+            'expires_in' => $ttl,
         ], 201);
     }
 
@@ -66,12 +68,14 @@ class AuthController extends Controller
         }
 
         $user = auth('api')->user();
+        $ttl = config('jwt.ttl') * 60;
 
         return response()->json([
             'success' => true,
             'message' => 'Sesión iniciada exitosamente',
             'user' => $user,
             'token' => $token,
+            'expires_in' => $ttl,
         ]);
     }
 
@@ -114,11 +118,16 @@ class AuthController extends Controller
      */
     public function refresh(): JsonResponse
     {
-        $token = JWTAuth::refresh();
-
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json(['error' => 'No autenticado'], 401);
+        }
+        $token = JWTAuth::refresh(JWTAuth::getToken());
+        $ttl = config('jwt.ttl') * 60;
         return response()->json([
             'success' => true,
-            'token' => $token
+            'token' => $token,
+            'expires_in' => $ttl,
         ]);
     }
 }
