@@ -119,6 +119,29 @@ class RoomController extends Controller
             'data' => $room
         ]);
     }
+    public function check(Room $room): JsonResponse
+    {
+        $userId = auth('api')->id();
+        $isActive = $room->isUserActive($userId);
+
+        return response()->json([
+            'data' => [
+                'success' => true,
+                'room_id' => $room->id,
+                'is_active' => $isActive,
+                'room' => [
+                    'id' => $room->id,
+                    'name' => $room->name,
+                    'description' => $room->description,
+                    'is_private' => $room->is_private,
+                ]
+            ],
+            'message' => 'Verificación de acceso exitosa',
+        ], 200);
+    }
+
+
+
     /**
      *  Actualizar una sala existente
      */

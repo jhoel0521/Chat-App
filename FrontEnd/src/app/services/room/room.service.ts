@@ -33,6 +33,17 @@ export interface CreateRoomRequest {
   is_private?: boolean;
   allow_anonymous?: boolean;
 }
+export interface CheckRoomResponse {
+  success: boolean;
+  room_id: string;
+  is_active: boolean;
+  room: {
+    id: string;
+    name: string;
+    description?: string;
+    is_private: boolean;
+  };
+}
 
 export interface JoinRoomRequest {
   password?: string; // Para salas privadas con password
@@ -146,4 +157,12 @@ export class RoomService {
   deleteRoom(roomId: string): Observable<ApiResponse<any>> {
     return this.apiService.delete(`rooms/${roomId}`);
   }
+  /**
+   * 
+   */
+  checkRoom(roomId: string): Observable<ApiResponse<CheckRoomResponse>> {
+    return this.apiService.get<CheckRoomResponse>(`check/${roomId}`);
+  }
+
+
 }

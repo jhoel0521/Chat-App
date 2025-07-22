@@ -1,0 +1,77 @@
+<div class="min-h-screen bg-base-100">
+    <!-- Header/Navbar -->
+    <div class="navbar bg-base-200 shadow-lg">
+        <div class="navbar-start">
+            <h1 class="text-xl font-bold text-primary">💬 Chat App</h1>
+        </div>
+        <div class="navbar-center">
+            <div class="breadcrumbs text-sm">
+                <ul>
+                    <li><a class="font-medium">Inicio</a></li>
+                    <li class="font-bold">Invitación</li>
+                </ul>
+            </div>
+        </div>
+        <div class="navbar-end">
+            <!-- Botón de login o perfil -->
+            <ng-container *ngIf="currentUser; else loginButton">
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+                        <div class="w-10 rounded-full overflow-hidden">
+                            <img *ngIf="hasProfilePhoto()" [src]="getProfilePhotoUrl()"
+                                class="w-full h-full object-cover">
+                            <div *ngIf="!hasProfilePhoto()"
+                                class="w-full h-full bg-primary text-primary-content flex items-center justify-center">
+                                {{ currentUser.name.charAt(0).toUpperCase() }}
+                            </div>
+                        </div>
+                    </div>
+                    <ul tabindex="0"
+                        class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                        <li class="menu-title bg-base-200">
+                            <span class="font-bold">{{ currentUser.name }}</span>
+                            <span *ngIf="currentUser.is_anonymous" class="badge badge-warning badge-xs">Invitado</span>
+                            <span *ngIf="!currentUser.is_anonymous"
+                                class="badge badge-success badge-xs">Registrado</span>
+                        </li>
+                        <li><a (click)="goToProfile()">👤 Mi Perfil</a></li>
+                        <li><a class="text-error font-medium" (click)="logout()">🚪 Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </ng-container>
+            <ng-template #loginButton>
+                <a class="btn btn-outline" routerLink="/login">Iniciar Sesión</a>
+            </ng-template>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="hero bg-gradient-to-r from-secondary to-accent text-primary-content rounded-box mb-8 p-6 shadow-lg">
+            <div class="hero-content text-center">
+                <div class="max-w-md">
+                    <h1 class="mb-4 text-4xl font-bold">Has sido invitado a una sala</h1>
+                    <p class="mb-5">
+                        Estás a punto de unirte a la sala <strong class="text-accent">{{ room?.name }}</strong>.
+                        <br>
+                    </p>
+                    <div class="flex justify-center gap-4">
+                        <button class="btn btn-primary" (click)="acceptInvitation()">Aceptar</button>
+                        <button class="btn btn-outline" (click)="declineInvitation()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="card bg-base-100 shadow-xl border border-base-300">
+            <div class="card-body text-center">
+                <h2 class="card-title text-2xl">Detalles de la Sala</h2>
+                <p><strong>ID:</strong> {{ room?.id }}</p>
+                <p><strong>Privacidad:</strong> {{ room?.is_private ? 'Privada' : 'Pública' }}</p>
+                <p><strong>Creada por:</strong> {{ room?.creator?.name || 'Desconocido' }}</p>
+                <p><strong>Última actividad:</strong> {{ room?.last_activity || 'N/A' }}</p>
+            </div>
+        </div>
+    </div>
+</div>

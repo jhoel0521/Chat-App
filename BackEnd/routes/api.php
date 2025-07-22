@@ -50,6 +50,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/my-rooms', [RoomController::class, 'myRooms']);
     Route::post('/rooms', [RoomController::class, 'store']);
     Route::get('/rooms/{room}', [RoomController::class, 'show']);
+    Route::get('/check/{room}', [RoomController::class, 'check']);
     Route::put('/rooms/{room}', [RoomController::class, 'update']);
     Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
     Route::post('/rooms/{room}/join', [RoomController::class, 'join']);
