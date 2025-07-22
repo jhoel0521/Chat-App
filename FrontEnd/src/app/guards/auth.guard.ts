@@ -24,7 +24,7 @@ export const authGuard: CanActivateFn = (route, state) => {
       } else {
         console.log('AuthGuard - Not authenticated, redirecting to login');
         // Usar navigateByUrl para navegación absoluta
-        router.navigateByUrl('/login');
+        router.navigate(['/login'], { queryParams: { redirect: state.url } });
         return false;
       }
     })
