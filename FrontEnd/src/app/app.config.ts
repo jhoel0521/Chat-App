@@ -2,6 +2,7 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChang
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './interceptors/auth.interceptor';
+import { unauthorizedInterceptor } from './interceptors/unauthorized.interceptor';
 
 import { routes } from './app.routes';
 
@@ -12,7 +13,8 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(
       withInterceptors([
-        authInterceptor
+        authInterceptor,
+        unauthorizedInterceptor
       ])
     )
   ]

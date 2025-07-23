@@ -313,7 +313,10 @@ export class AuthService {
     this.currentUserSubject.next(null);
     this.isLoggedInSubject.next(false);
   }
-
+  forceClearAuthData(): void {
+    console.log('🔒 Forzando limpieza de datos de autenticación')
+    localStorage.clear()
+  }
   /**
    * Verificar si el usuario está autenticado
    */
