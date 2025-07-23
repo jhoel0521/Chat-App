@@ -8,8 +8,8 @@ export interface Message {
   user_id: string | null;
   message: string;
   message_type: 'text' | 'image' | 'file' | 'system';
-  guest_name?: string; // Para usuarios anónimos
-  reply_to?: string | null; // Responder a otro mensaje
+  guest_name?: string;
+  reply_to?: string | null;
   file_id?: string;
   created_at: string;
   updated_at: string;
@@ -17,6 +17,7 @@ export interface Message {
     id: string;
     name: string;
     is_anonymous: boolean;
+    profile_photo?: string;
   };
   file?: {
     id: string;
@@ -29,28 +30,25 @@ export interface Message {
 }
 
 export interface MessagesResponse {
-  success: boolean;
-  messages: {
-    current_page: number;
-    data: Message[];
-    first_page_url: string;
-    from: number;
-    last_page: number;
-    last_page_url: string;
-    links: any[];
-    next_page_url: string | null;
-    path: string;
-    per_page: number;
-    prev_page_url: string | null;
-    to: number;
-    total: number;
-  };
+  current_page: number;
+  data: Message[];
+  first_page_url: string;
+  from: number;
+  last_page: number;
+  last_page_url: string;
+  links: any[];
+  next_page_url: string | null;
+  path: string;
+  per_page: number;
+  prev_page_url: string | null;
+  to: number;
+  total: number;
 }
 
 export interface SendMessageRequest {
+  room_id: string;
   message: string;
-  type: 'text' | 'image' | 'file';
-  file?: File;
+  message_type?: 'text' | 'image' | 'file';
 }
 
 @Injectable({
@@ -58,42 +56,29 @@ export interface SendMessageRequest {
 })
 export class MessageService {
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService) { }
 
   /**
    * Obtener mensajes de una sala
    */
-  getMessages(roomId: string, page: number = 1): Observable<ApiResponse<MessagesResponse>> {
-    return this.apiService.get<MessagesResponse>(`rooms/${roomId}/messages?page=${page}`);
+  getMessages(roomId: string, lastTimestamp?: string | null): Observable<ApiResponse<MessagesResponse>> {
+    let url = `messages?room_id=${roomId}`;
+    if (lastTimestamp) {
+      url += `&last_timestamp=${lastTimestamp}`;
+    }
+    return this.apiService.get<MessagesResponse>(url);
   }
 
   /**
    * Enviar mensaje de texto
    */
-  sendMessage(roomId: string, messageData: SendMessageRequest): Observable<ApiResponse<Message>> {
-    if (messageData.file) {
-      // Si hay archivo, usar FormData
-      const formData = new FormData();
-      formData.append('message', messageData.message);
-      formData.append('type', messageData.type);
-      formData.append('file', messageData.file);
-      
-      return this.apiService.post<Message>(`rooms/${roomId}/messages`, formData);
-    } else {
-      // Si es solo texto, usar JSON
-      return this.apiService.post<Message>(`rooms/${roomId}/messages`, {
-        message: messageData.message,
-        type: messageData.type
-      });
-    }
-  }
+  sendMessage(roomId: string, message: string, messageType: string = 'text'): Observable<ApiResponse<{ message: Message }>> {
+    const requestData: SendMessageRequest = {
+      room_id: roomId,
+      message: message,
+      message_type: messageType as 'text' | 'image' | 'file'
+    };
 
-  /**
-   * Obtener mensajes en tiempo real (WebSocket)
-   */
-  subscribeToMessages(roomId: string): Observable<Message> {
-    // TODO: Implementar WebSocket usando Laravel Reverb
-    // Por ahora retornamos un Observable vacío
-    return new Observable<Message>();
+    return this.apiService.post<{ message: Message }>('messages', requestData);
   }
 }

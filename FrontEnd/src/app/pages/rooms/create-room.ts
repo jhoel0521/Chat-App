@@ -28,7 +28,7 @@ export class CreateRoomComponent implements OnInit {
     private roomService: RoomService,
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // Verificar autenticación
@@ -74,7 +74,7 @@ export class CreateRoomComponent implements OnInit {
     this.roomService.createRoom(roomData).subscribe({
       next: (response) => {
         this.isLoading = false;
-        
+
         // Verificar si la respuesta viene envuelta en ApiResponse o directamente
         let roomResponse: any;
         if (response.data) {
@@ -85,25 +85,25 @@ export class CreateRoomComponent implements OnInit {
 
         if (roomResponse && (roomResponse.success !== false)) {
           this.successMessage = 'Sala creada exitosamente';
-          
-          // Redirigir al dashboard después de 2 segundos
+
+          // Redirigir al la sala creada despues de 1 segundo
           setTimeout(() => {
-            this.router.navigate(['/dashboard']);
-          }, 2000);
+            this.router.navigate(['/rooms', roomResponse.room.id]);
+          }, 1000);
         } else {
           this.errorMessage = roomResponse?.message || 'Error al crear la sala';
         }
       },
       error: (error) => {
         this.isLoading = false;
-        
+
         if (error.status === 401) {
           console.error('🔐 CreateRoom - Error de autorización 401');
           // Verificar tokens nuevamente después del error
           const tokenAfterError = localStorage.getItem('chat_app_token');
           console.error('🔐 CreateRoom - Token después del error:', !!tokenAfterError);
         }
-        
+
         this.errorMessage = error.error?.message || 'Error de conexión al crear la sala';
       }
     });

@@ -1,0 +1,470 @@
+<div class="min-h-screen bg-base-200">
+    <!-- Header/Navbar - Mejor contraste -->
+    <div class="navbar bg-base-200 shadow-lg">
+        <div class="navbar-start">
+            <button class="btn btn-ghost btn-circle" (click)="goBack()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <h1 class="text-xl font-bold text-base-content">👤 Mi Perfil</h1>
+        </div>
+        <div class="navbar-center">
+            <div class="breadcrumbs text-sm">
+                <ul>
+                    <li><a class="font-medium" (click)="goBack()">Dashboard</a></li>
+                    <li class="font-bold">Perfil</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+
+        <!-- Hero Section - Destacado -->
+        <div
+            class="hero bg-gradient-to-r from-primary to-secondary text-primary-content rounded-box mb-8 p-6 shadow-lg">
+            <div class="hero-content flex-col md:flex-row gap-8">
+                <!-- Foto de Perfil -->
+                <div class="flex flex-col items-center">
+                    <div class="avatar">
+                        <div class="w-32 rounded-full ring ring-primary-content ring-offset-base-100 ring-offset-2">
+                            <img [src]="getProfilePhotoUrl()" [alt]="currentUser?.name || 'Usuario'" />
+                        </div>
+                    </div>
+                    <button class="btn btn-outline btn-sm mt-4 btn-primary-content" (click)="openPhotoModal()">
+                        📷 Cambiar Foto
+                    </button>
+                </div>
+
+                <!-- Información Principal -->
+                <div class="text-center md:text-left">
+                    <h2 class="text-3xl font-bold mb-2">
+                        {{ currentUser?.name || 'Usuario' }}
+                    </h2>
+
+                    <div class="flex flex-wrap gap-2 justify-center md:justify-start mb-4">
+                        <div class="badge badge-warning" *ngIf="currentUser?.is_anonymous">
+                            👤 Cuenta Anónima
+                        </div>
+                        <div class="badge badge-success" *ngIf="!currentUser?.is_anonymous">
+                            ✅ Cuenta Registrada
+                        </div>
+                        <div class="badge badge-outline badge-primary-content" *ngIf="currentUser?.email">
+                            📧 {{ currentUser?.email }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4 opacity-90" *ngIf="currentUser?.created_at">
+                        📅 Miembro desde {{ formatDate(currentUser?.created_at) }}
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="flex flex-wrap gap-2 justify-center md:justify-start">
+                        <button class="btn btn-primary btn-sm" (click)="openEditModal()">
+                            ✏️ Editar Perfil
+                        </button>
+
+                        <button class="btn btn-secondary btn-sm" (click)="openPasswordModal()"
+                            *ngIf="!currentUser?.is_anonymous">
+                            🔒 Cambiar Contraseña
+                        </button>
+
+                        <button class="btn btn-accent btn-sm" (click)="openUpgradeModal()"
+                            *ngIf="currentUser?.is_anonymous">
+                            ⬆️ Crear Cuenta
+                        </button>
+
+                        <button class="btn btn-error btn-sm" (click)="openDeleteModal()">
+                            🗑️ Eliminar Cuenta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas - Estilo Dashboard -->
+        <div class="stats stats-vertical lg:stats-horizontal shadow w-full mb-8 bg-base-100">
+            <div class="stat border border-base-300">
+                <div class="stat-figure text-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        class="inline-block w-8 h-8 stroke-current">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4">
+                        </path>
+                    </svg>
+                </div>
+                <div class="stat-title text-base-content">Salas Creadas</div>
+                <div class="stat-value text-primary">{{ currentUser?.rooms_count }}</div>
+                <div class="stat-desc text-base-content">Total de salas</div>
+            </div>
+
+            <div class="stat border border-base-300">
+                <div class="stat-figure text-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        class="inline-block w-8 h-8 stroke-current">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <div class="stat-title text-base-content">Mensajes Enviados</div>
+                <div class="stat-value text-secondary">{{ currentUser?.count_messages }}</div>
+                <div class="stat-desc text-base-content">Total de mensajes</div>
+            </div>
+
+            <div class="stat border border-base-300">
+                <div class="stat-figure text-accent">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        class="inline-block w-8 h-8 stroke-current">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4">
+                        </path>
+                    </svg>
+                </div>
+                <div class="stat-title text-base-content">Salas Unidas</div>
+                <div class="stat-value text-accent">{{ currentUser?.rooms_joined_count }}</div>
+                <div class="stat-desc text-base-content">Total de participaciones</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Perfil -->
+    <dialog class="modal" [class.modal-open]="showEditModal">
+        <div class="modal-box bg-base-100">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                    (click)="closeEditModal()">✕</button>
+            </form>
+
+            <h3 class="font-bold text-lg mb-4">✏️ Editar Perfil</h3>
+
+            <!-- Alertas - Estilo Dashboard -->
+            <div class="alert alert-error shadow-lg mb-4" *ngIf="editError">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ editError }}</span>
+            </div>
+
+            <div class="alert alert-success shadow-lg mb-4" *ngIf="editSuccess">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ editSuccess }}</span>
+            </div>
+
+            <!-- Formulario -->
+            <form (ngSubmit)="updateProfile()" class="space-y-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-base-content">Nombre</span>
+                    </label>
+                    <input type="text" class="input input-bordered w-full" [(ngModel)]="editForm.name" name="name"
+                        autocomplete="name" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-base-content">Email</span>
+                    </label>
+                    <input type="email" class="input input-bordered w-full" [(ngModel)]="editForm.email" name="email"
+                        autocomplete="email" [disabled]="currentUser?.is_anonymous === true">
+                    <label class="label" *ngIf="currentUser?.is_anonymous">
+                        <span class="label-text-alt text-warning">Actualiza tu cuenta para modificar el email</span>
+                    </label>
+                </div>
+
+                <div class="modal-action">
+                    <button type="button" class="btn btn-ghost" (click)="closeEditModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" [class.loading]="isLoading" [disabled]="isLoading">
+                        <span *ngIf="!isLoading">Guardar Cambios</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- Modal: Cambiar Contraseña -->
+    <dialog class="modal" [class.modal-open]="showPasswordModal">
+        <div class="modal-box bg-base-100">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                    (click)="closePasswordModal()">✕</button>
+            </form>
+
+            <h3 class="font-bold text-lg mb-4">🔒 Cambiar Contraseña</h3>
+
+            <!-- Alertas - Estilo Dashboard -->
+            <div class="alert alert-error shadow-lg mb-4" *ngIf="passwordError">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ passwordError }}</span>
+            </div>
+
+            <div class="alert alert-success shadow-lg mb-4" *ngIf="passwordSuccess">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ passwordSuccess }}</span>
+            </div>
+
+            <!-- Formulario -->
+            <form (ngSubmit)="changePassword()" class="space-y-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-base-content">Contraseña Actual</span>
+                    </label>
+                    <input type="password" class="input input-bordered w-full"
+                        [(ngModel)]="passwordForm.current_password" name="current_password"
+                        autocomplete="current-password" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-base-content">Nueva Contraseña</span>
+                    </label>
+                    <input type="password" class="input input-bordered w-full" [(ngModel)]="passwordForm.new_password"
+                        name="new_password" autocomplete="new-password" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-base-content">Confirmar Nueva Contraseña</span>
+                    </label>
+                    <input type="password" class="input input-bordered w-full"
+                        [(ngModel)]="passwordForm.new_password_confirmation" name="new_password_confirmation"
+                        autocomplete="new-password" required>
+                </div>
+
+                <div class="modal-action">
+                    <button type="button" class="btn btn-ghost" (click)="closePasswordModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-secondary" [class.loading]="isLoading" [disabled]="isLoading">
+                        <span *ngIf="!isLoading">Cambiar Contraseña</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- Modal: Actualizar Cuenta -->
+    <dialog class="modal" [class.modal-open]="showUpgradeModal">
+        <div class="modal-box bg-base-100">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                    (click)="closeUpgradeModal()">✕</button>
+            </form>
+
+            <h3 class="font-bold text-lg mb-4">⬆️ Crear Cuenta Registrada</h3>
+
+            <div class="alert alert-info shadow-lg mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Convierte tu cuenta anónima en una cuenta registrada con email y contraseña.</span>
+            </div>
+
+            <!-- Alertas - Estilo Dashboard -->
+            <div class="alert alert-error shadow-lg mb-4" *ngIf="upgradeError">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ upgradeError }}</span>
+            </div>
+
+            <div class="alert alert-success shadow-lg mb-4" *ngIf="upgradeSuccess">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ upgradeSuccess }}</span>
+            </div>
+
+            <!-- Formulario -->
+            <form (ngSubmit)="upgradeAccount()" class="space-y-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-base-content">Nombre</span>
+                    </label>
+                    <input type="text" class="input input-bordered w-full" [(ngModel)]="upgradeForm.name" name="name"
+                        autocomplete="name" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-base-content">Email</span>
+                    </label>
+                    <input type="email" class="input input-bordered w-full" [(ngModel)]="upgradeForm.email" name="email"
+                        autocomplete="email" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-base-content">Contraseña</span>
+                    </label>
+                    <input type="password" class="input input-bordered w-full" [(ngModel)]="upgradeForm.password"
+                        name="password" autocomplete="new-password" required>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text text-base-content">Confirmar Contraseña</span>
+                    </label>
+                    <input type="password" class="input input-bordered w-full"
+                        [(ngModel)]="upgradeForm.password_confirmation" name="password_confirmation"
+                        autocomplete="new-password" required>
+                </div>
+
+                <div class="modal-action">
+                    <button type="button" class="btn btn-ghost" (click)="closeUpgradeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-accent" [class.loading]="isLoading" [disabled]="isLoading">
+                        <span *ngIf="!isLoading">Crear Cuenta</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- Modal: Foto de Perfil -->
+    <dialog class="modal" [class.modal-open]="showPhotoModal">
+        <div class="modal-box bg-base-100">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                    (click)="closePhotoModal()">✕</button>
+            </form>
+
+            <h3 class="font-bold text-lg mb-4">📷 Foto de Perfil</h3>
+
+            <!-- Alertas - Estilo Dashboard -->
+            <div class="alert alert-error shadow-lg mb-4" *ngIf="photoError">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ photoError }}</span>
+            </div>
+
+            <div class="alert alert-success shadow-lg mb-4" *ngIf="photoSuccess">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ photoSuccess }}</span>
+            </div>
+
+            <!-- Vista previa actual -->
+            <div class="flex justify-center mb-4">
+                <div class="avatar">
+                    <div class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                        <img [src]="photoPreview || getProfilePhotoUrl()" [alt]="currentUser?.name || 'Usuario'" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subir foto -->
+            <div class="form-control mb-6">
+                <label class="label">
+                    <span class="label-text text-base-content">Seleccionar imagen</span>
+                </label>
+                <input type="file" class="file-input file-input-bordered w-full" accept="image/jpeg,png,jpg,gif"
+                    name="profile_photo" (change)="onFileSelected($event)">
+                <label class="label">
+                    <span class="label-text-alt">Máximo 5MB. Formatos: JPG, PNG, GIF</span>
+                </label>
+            </div>
+
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" (click)="closePhotoModal()">Cancelar</button>
+                <button type="button" class="btn btn-error btn-outline" (click)="deletePhoto()"
+                    [class.loading]="isLoading" [disabled]="isLoading || !currentUser?.profile_photo">
+                    🗑️ Eliminar
+                </button>
+                <button type="button" class="btn btn-primary" (click)="uploadPhoto()" [class.loading]="isLoading"
+                    [disabled]="isLoading || !selectedFile">
+                    📤 Subir
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Modal: Eliminar Cuenta -->
+    <dialog class="modal" [class.modal-open]="showDeleteModal">
+        <div class="modal-box bg-base-100">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                    (click)="closeDeleteModal()">✕</button>
+            </form>
+
+            <h3 class="font-bold text-lg mb-4">🗑️ Eliminar Cuenta</h3>
+
+            <div class="alert alert-warning shadow-lg mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 w-6 h-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span>¡Atención! Esta acción no se puede deshacer. Se eliminarán todos tus datos permanentemente.</span>
+            </div>
+
+            <!-- Alertas - Estilo Dashboard -->
+            <div class="alert alert-error shadow-lg mb-4" *ngIf="deleteError">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ deleteError }}</span>
+            </div>
+
+            <div class="alert alert-success shadow-lg mb-4" *ngIf="deleteSuccess">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ deleteSuccess }}</span>
+            </div>
+
+            <!-- Confirmación -->
+            <div class="form-control mb-4" *ngIf="!currentUser?.is_anonymous">
+                <label class="label">
+                    <span class="label-text text-base-content">Confirma tu contraseña para eliminar la cuenta</span>
+                </label>
+                <input type="password" class="input input-bordered w-full" [(ngModel)]="deletePassword"
+                    placeholder="Tu contraseña actual" autocomplete="current-password" required>
+            </div>
+
+            <div class="text-center mb-6">
+                <p class="text-lg font-semibold text-base-content">¿Estás seguro de que quieres eliminar tu cuenta?</p>
+                <p class="text-sm text-base-content/70 mt-2">
+                    Se eliminarán todos tus datos, incluyendo salas creadas y mensajes enviados.
+                </p>
+            </div>
+
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" (click)="closeDeleteModal()">Cancelar</button>
+                <button type="button" class="btn btn-error" (click)="deleteAccount()" [class.loading]="isLoading"
+                    [disabled]="isLoading">
+                    <span *ngIf="!isLoading">🗑️ Eliminar Cuenta</span>
+                </button>
+            </div>
+        </div>
+    </dialog>
+</div>

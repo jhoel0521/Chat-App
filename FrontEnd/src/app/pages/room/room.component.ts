@@ -1,55 +1,65 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { filter, take } from 'rxjs/operators';
+import { Subscription, timer } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { AuthService, User } from '../../services/auth/auth.service';
-import { RoomService, Room } from '../../services/room/room.service';
+import { RoomService, Room, CreateRoomRequest } from '../../services/room/room.service';
 import { MessageService, Message } from '../../services/message/message.service';
-import { WebSocketService } from '../../services/websocket/websocket.service';
-import { MessageComponent } from '../../components/message/message.component';
-import { ChatFormComponent, ChatFormData } from '../../components/chat-form/chat-form.component';
+import { MessagesListComponent } from '../../components/messages-list/messages-list.component';
+import { MessageInputComponent, MessageInputData } from '../../components/message-input/message-input.component';
 import { ApiResponse } from '../../services/api';
+import { environment } from '../../../environments/environment';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-room',
   standalone: true,
-  imports: [CommonModule, MessageComponent, ChatFormComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MessagesListComponent,
+    MessageInputComponent
+  ],
   templateUrl: './room.component.html',
   styleUrl: './room.component.css'
 })
 export class RoomComponent implements OnInit, OnDestroy {
+  @ViewChild('renameModal') renameModal!: ElementRef<HTMLDialogElement>;
+  @ViewChild('infoModal') infoModal!: ElementRef<HTMLDialogElement>;
+
   roomId: string = '';
   room: Room | null = null;
   currentUser: User | null = null;
   messages: Message[] = [];
+  newRoomName: string = '';
 
   // Estados de carga
   isLoadingRoom = true;
   isLoadingMessages = true;
-  isLoadingMoreMessages = false;
 
   // Errores
   roomError = '';
   messagesError = '';
 
-  // Estados WebSocket
-  isWebSocketConnected = false;
-
-  // Paginación
-  hasMoreMessages = false;
-  lastTimestamp: string | null = null;
+  // Sincronización por timestamp
+  private lastTimestamp: string | null = null;
+  private pollingSubscription?: Subscription;
+  private isPollingActive = false;
 
   // Subscripciones
   private subscriptions: Subscription[] = [];
 
+  // ViewChild para acceder al componente de mensajes
+  @ViewChild(MessagesListComponent) messagesListComponent!: MessagesListComponent;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private authService: AuthService,
-    private roomService: RoomService,
-    private messageService: MessageService,
-    private webSocketService: WebSocketService
+    private authService: AuthService = inject(AuthService),
+    private roomService: RoomService = inject(RoomService),
+    private messageService: MessageService = inject(MessageService)
   ) { }
 
   ngOnInit(): void {
@@ -61,127 +71,106 @@ export class RoomComponent implements OnInit, OnDestroy {
       if (!user) this.router.navigate(['/login']);
 
       this.loadRoom();
-      this.setupWebSocket();
+      this.loadInitialMessages();
     });
   }
 
   ngOnDestroy(): void {
-    // Desconectar WebSocket al salir
-    this.webSocketService.unsubscribeFromRoom(this.roomId);
+    this.stopMessagePolling();
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   /**
-   * Configurar conexión WebSocket
+   * Cargar mensajes iniciales
    */
-  private setupWebSocket(): void {
-    // Suscribirse una sola vez cuando esté conectado
-    this.webSocketService.isConnected$.pipe(
-      filter((connected: boolean) => connected),
-      take(1) // ❌ SOLO UNA VEZ
-    ).subscribe(() => {
-      console.log('✅ WebSocket conectado, suscribiendo a sala...');
-
-      const roomSub = this.webSocketService.subscribeToRoom(this.roomId).subscribe({
-        next: (wsMessage) => this.handleWebSocketMessage(wsMessage),
-        error: (err) => console.error('Error en suscripción WebSocket:', err)
-      });
-
-      this.subscriptions.push(roomSub);
-      this.loadMessages(); // Cargar mensajes después de conectar
+  private loadInitialMessages(): void {
+    this.isLoadingMessages = true;
+    this.messageService.getMessages(this.roomId).subscribe({
+      next: (response) => {
+        if (response.data) {
+          this.processMessageResponse(response.data);
+          this.startMessagePolling();
+        }
+        this.isLoadingMessages = false;
+      },
+      error: (error) => {
+        this.isLoadingMessages = false;
+        this.messagesError = 'Error al cargar mensajes';
+        console.error('❌ Error loading initial messages:', error);
+      }
     });
   }
-  private handleWebSocketMessage(wsMessage: any): void {
-    console.log(`📬 Mensaje WebSocket recibido: ${wsMessage.type} 📬`);
-    switch (wsMessage.type) {
-      case 'message.sent': this.handleNewMessage(wsMessage.data); break;
-      case 'user.joined': this.handleUserJoined(wsMessage.data); break;
-      case 'user.left': this.handleUserLeft(wsMessage.data); break;
-      case 'messages.loaded': this.handleMessagesLoaded(wsMessage.data); break;
-      default: console.warn('Evento no manejado:', wsMessage.type);
-    }
-  }
-  /**
-   * Manejar nuevo mensaje recibido por WebSocket
-   */
-  private handleNewMessage(messageData: any): void {
-    console.log('📨 Procesando nuevo mensaje:', messageData);
 
-    if (messageData.message) {
-      // Agregar el mensaje a la lista si no existe ya
-      const existingMessage = this.messages.find(msg => msg.id === messageData.message.id);
-      if (!existingMessage) {
-        this.messages.push(messageData.message);
+  /**
+   * Iniciar polling de mensajes
+   */
+  private startMessagePolling(): void {
+    if (this.isPollingActive) return;
+
+    console.log('🔄 Iniciando polling de mensajes cada', environment.polling.messagesInterval, 'ms');
+    this.isPollingActive = true;
+
+    this.pollingSubscription = timer(0, environment.polling.messagesInterval).pipe(
+      switchMap(() => this.messageService.getMessages(this.roomId, this.lastTimestamp))
+    ).subscribe({
+      next: (response) => {
+        if (response.data) {
+          this.processMessageResponse(response.data);
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error en polling de mensajes:', error);
+      }
+    });
+
+    this.subscriptions.push(this.pollingSubscription);
+  }
+
+  /**
+   * Detener polling de mensajes
+   */
+  private stopMessagePolling(): void {
+    if (this.pollingSubscription) {
+      this.pollingSubscription.unsubscribe();
+      this.pollingSubscription = undefined;
+    }
+    this.isPollingActive = false;
+    console.log('⏹️ Polling de mensajes detenido');
+  }
+
+  /**
+   * Procesar respuesta de mensajes
+   */
+  private processMessageResponse(data: any): void {
+    if (data.messages && Array.isArray(data.messages)) {
+      // Filtrar mensajes duplicados
+      const existingIds = new Set(this.messages.map(m => m.id));
+      const newMessages = data.messages.filter((msg: Message) => !existingIds.has(msg.id));
+
+      if (newMessages.length > 0) {
+        console.log(`📨 ${newMessages.length} nuevos mensajes recibidos`);
+        this.messages = [...this.messages, ...newMessages];
         this.scrollToBottom();
       }
-    }
-  }
-
-  /**
-   * Manejar usuario que se unió a la sala
-   */
-  private handleUserJoined(userData: any): void {
-    console.log('👤 Usuario se unió:', userData);
-    // TODO: Mostrar notificación de usuario que se unió
-  }
-
-  /**
-   * Manejar usuario que salió de la sala
-   */
-  private handleUserLeft(userData: any): void {
-    console.log('👤 Usuario salió:', userData);
-    // TODO: Mostrar notificación de usuario que salió
-  }
-
-  /**
-   * Manejar mensajes cargados por WebSocket
-   */
-  private handleMessagesLoaded(messagesData: any): void {
-    console.log('📚 Procesando mensajes cargados:', messagesData);
-
-    this.isLoadingMessages = false;
-    this.isLoadingMoreMessages = false;
-
-    if (messagesData.messages && Array.isArray(messagesData.messages)) {
-      if (this.lastTimestamp) {
-        // Es paginación - agregar mensajes antiguos al inicio
-        this.messages = [...messagesData.messages, ...this.messages];
-      } else {
-        // Es carga inicial - reemplazar todos los mensajes
-        this.messages = messagesData.messages;
-        // Scroll hacia abajo solo en carga inicial
-        this.scrollToBottom();
+      // Actualizar timestamp para la próxima solicitud
+      if (data.last_timestamp) {
+        this.lastTimestamp = data.last_timestamp;
       }
-
-      // Actualizar estado de paginación
-      this.hasMoreMessages = messagesData.has_more || false;
-      this.lastTimestamp = messagesData.last_timestamp || null;
-
-      console.log('✅ Mensajes procesados. Total:', this.messages.length);
-      console.log('📚 Hay más mensajes:', this.hasMoreMessages);
-      console.log('⏰ Último timestamp:', this.lastTimestamp);
-    } else {
-      console.warn('⚠️ Estructura de mensajes incorrecta:', messagesData);
     }
   }
 
   /**
    * Cargar información de la sala
    */
-  loadRoom(): void {
+  public loadRoom(): void {
     this.isLoadingRoom = true;
-    this.roomError = '';
     this.roomService.getRoom(this.roomId).subscribe({
       next: (response: ApiResponse<Room>) => {
         this.isLoadingRoom = false;
-        if (response.data) {
-          this.room = response.data;
-        } else {
-          this.roomError = 'No se pudo cargar la información de la sala';
-          console.warn('⚠️ No se pudo cargar la sala');
-        }
+        this.room = response.data || null;
+        console.log('Sala cargada:', this.room);
       },
-      error: (error: any) => {
+      error: (error) => {
         this.isLoadingRoom = false;
         this.roomError = 'Error al cargar la sala';
         console.error('❌ Error loading room:', error);
@@ -190,54 +179,27 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Cargar mensajes por WebSocket PURO
+   * Enviar nuevo mensaje
    */
-  loadMessages(): void {
-    this.isLoadingMessages = true;
-    this.messagesError = '';
-
-    console.log('📚 Cargando mensajes por WebSocket puro...');
-
-    // Solicitar mensajes directamente por WebSocket (sin HTTP)
-    this.webSocketService.loadMessages(this.roomId, this.lastTimestamp || undefined);
-  }
-
-  /**
-   * Cargar más mensajes antiguos (paginación WebSocket puro)
-   */
-  loadMoreMessages(): void {
-    if (!this.hasMoreMessages || this.isLoadingMoreMessages) return;
-
-    this.isLoadingMoreMessages = true;
-    console.log('📚 Cargando más mensajes antiguos por WebSocket puro...');
-
-    // Solicitar más mensajes directamente por WebSocket
-    this.webSocketService.loadMessages(this.roomId, this.lastTimestamp || undefined);
-  }
-
-  /**
-   * Enviar nuevo mensaje por WebSocket PURO
-   */
-  onSendMessage(messageData: ChatFormData): void {
+  onSendMessage(messageData: MessageInputData): void {
     if (!this.currentUser) return;
 
-    console.log('📨 Enviando mensaje por WebSocket puro:', messageData);
+    this.messageService.sendMessage(this.roomId, messageData.message).subscribe({
+      next: (response) => {
+        if (response.data?.message) {
+          // Agregar el mensaje localmente inmediatamente
+          this.messages = [...this.messages, response.data.message];
 
-    // Obtener el ID del usuario actual
-    this.authService.getCurrentUser().subscribe({
-      next: (userResponse) => {
-        if (userResponse.data) {
-          const userId = userResponse.data.id;
-
-          // Enviar mensaje directamente por WebSocket (sin HTTP)
-          this.webSocketService.sendMessage(this.roomId, messageData.message, userId);
-          console.log('✅ Mensaje enviado por WebSocket puro');
-        } else {
-          console.error('❌ No se pudo obtener datos del usuario');
+          // Forzar scroll al fondo después de actualizar el array
+          setTimeout(() => {
+            if (this.messagesListComponent) {
+              this.messagesListComponent.scrollToBottomNow();
+            }
+          }, 150);
         }
       },
-      error: (error: any) => {
-        console.error('❌ Error obteniendo usuario actual:', error);
+      error: (error) => {
+        console.error('❌ Error enviando mensaje:', error);
       }
     });
   }
@@ -253,12 +215,9 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Scroll hacia el final de los mensajes
    */
   private scrollToBottom(): void {
-    setTimeout(() => {
-      const messagesContainer = document.querySelector('.messages-container');
-      if (messagesContainer) {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
-    }, 100);
+    if (this.messagesListComponent) {
+      this.messagesListComponent.scrollToBottomNow();
+    }
   }
 
   /**
@@ -280,5 +239,128 @@ export class RoomComponent implements OnInit, OnDestroy {
    */
   trackByMessageId(index: number, message: Message): string {
     return message.id;
+  }
+
+  /**
+   * Abrir modal de renombrar sala
+   */
+  openRenameModal(): void {
+    if (this.room) {
+      this.newRoomName = this.room.name;
+      this.renameModal.nativeElement.showModal();
+    }
+  }
+
+  /**
+   * Renombrar sala
+   */
+  renameRoom(): void {
+    if (!this.room || !this.newRoomName.trim()) return;
+
+    const updateData: Partial<CreateRoomRequest> = {
+      name: this.newRoomName
+    };
+
+    this.roomService.updateRoom(this.roomId, updateData).subscribe({
+      next: (response: ApiResponse<Room>) => {
+        if (response.data) {
+          this.room = response.data;
+          this.renameModal.nativeElement.close();
+        }
+      },
+      error: (error) => {
+        console.error('Error renaming room:', error);
+        alert('Error al renombrar la sala');
+      }
+    });
+  }
+
+  /**
+   * Eliminar sala
+   */
+  async deleteRoom(): Promise<void> {
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Esta acción no se puede deshacer. La sala será eliminada permanentemente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+    });
+    if (result.isConfirmed) {
+      this.roomService.deleteRoom(this.roomId).subscribe({
+        next: () => {
+          Swal.fire('Eliminada', 'La sala ha sido eliminada.', 'success');
+          this.router.navigate(['/dashboard']);
+        },
+        error: (error) => {
+          console.error('Error deleting room:', error);
+          Swal.fire('Error', 'Error al eliminar la sala', 'error');
+        }
+      });
+    }
+  }
+
+  /**
+   * Copiar enlace de invitación
+   */
+  copyInviteLink(): void {
+    const roomUrl = this.getInviteLink();
+    navigator.clipboard.writeText(roomUrl).then(() => {
+      Swal.fire({
+        icon: 'success',
+        title: '¡Enlace copiado!',
+        text: 'El enlace de invitación ha sido copiado al portapapeles.',
+        timer: 1800,
+        showConfirmButton: false
+      });
+    }).catch(err => {
+      console.error('Error al copiar el enlace:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al copiar el enlace',
+      });
+    });
+  }
+
+  /**
+   * Obtener enlace de invitación
+   */
+  getInviteLink(): string {
+    return `${window.location.origin}/rooms/${this.roomId}`;
+  }
+
+  /**
+   * Abrir modal de información
+   */
+  openInfoModal(): void {
+    this.infoModal.nativeElement.showModal();
+  }
+
+  /**
+   * Abrir configuración de sala (editar)
+   */
+  openSettings(): void {
+    this.router.navigate(['/rooms/edit', this.roomId]);
+  }
+
+  /**
+   * 
+   */
+  leaveRoom(): void {
+    if (this.room) {
+      this.roomService.leaveRoom(this.room.id).subscribe({
+        next: () => {
+          this.router.navigate(['/dashboard']);
+        },
+        error: (error) => {
+          console.error('Error leaving room:', error);
+          alert('Error al salir de la sala');
+        }
+      });
+    }
   }
 }

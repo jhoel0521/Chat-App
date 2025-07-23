@@ -1,0 +1,26 @@
+<div class="flex flex-col bg-slate-900" style="height: 90vh; overflow: hidden;">
+  <!-- Contenedor de mensajes con scroll -->
+  <div class="flex-1 overflow-y-auto" #scrollArea>
+    <div class="p-4 space-y-2">
+      <!-- Loading State -->
+      <div *ngIf="loading && messages.length === 0" class="flex justify-center items-center h-32">
+        <div class="text-slate-400">Cargando mensajes...</div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && messages.length === 0" class="flex justify-center items-center h-32">
+        <div class="text-slate-400">No hay mensajes aún. ¡Sé el primero en escribir!</div>
+      </div>
+
+      <!-- Messages -->
+      <div *ngIf="messages.length > 0" class="space-y-4">
+        <app-message *ngFor="let message of messages; trackBy: trackByMessageId" [message]="message"
+          [currentUser]="currentUser" [isAuthor]="isMessageAuthor(message)">
+        </app-message>
+      </div>
+
+      <!-- Scroll anchor -->
+      <div #messagesEnd></div>
+    </div>
+  </div>
+</div>

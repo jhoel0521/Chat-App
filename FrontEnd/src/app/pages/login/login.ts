@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, LoginRequest, RegisterRequest, GuestInitRequest } from '../../services/auth/auth.service';
-
+import { ActivatedRoute } from '@angular/router';
 @Component({
   selector: 'app-login',
   imports: [CommonModule, FormsModule],
@@ -34,8 +34,9 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private route: ActivatedRoute
+  ) { }
 
   /**
    * Cambiar pestaña activa
@@ -61,20 +62,20 @@ export class LoginComponent {
       next: (response) => {
         console.log('Login response:', response);
         this.isLoading = false;
-        
+
         // Verificar si la respuesta viene envuelta en ApiResponse o directamente
         let authResponse: any;
-        
+
         if (response.data) {
           authResponse = response.data;
         } else {
           authResponse = response as any;
         }
-        
+
         if (authResponse && authResponse.success) {
           console.log('Login successful, navigating to dashboard...');
           // Usar navigateByUrl para navegación absoluta
-          this.router.navigateByUrl('/dashboard');
+          this.redirectAfterAuth();
         } else {
           this.errorMessage = authResponse?.message || 'Error al iniciar sesión';
         }
@@ -110,17 +111,17 @@ export class LoginComponent {
         this.isLoading = false;
         // Verificar si la respuesta viene envuelta en ApiResponse o directamente
         let authResponse: any;
-        
+
         if (response.data) {
           authResponse = response.data;
         } else {
           authResponse = response as any;
         }
-        
+
         if (authResponse && authResponse.success) {
           console.log('Registration successful, navigating to dashboard...');
           // Usar navigateByUrl para navegación absoluta
-          this.router.navigateByUrl('/dashboard');
+          this.redirectAfterAuth();
         } else {
           this.errorMessage = authResponse?.message || 'Error al registrar usuario';
         }
@@ -151,16 +152,16 @@ export class LoginComponent {
         this.isLoading = false;
         // Verificar si la respuesta viene envuelta en ApiResponse o directamente
         let authResponse: any;
-        
+
         if (response.data) {
           authResponse = response.data;
         } else {
           authResponse = response as any;
         }
-        
+
         if (authResponse && authResponse.success) {
           console.log('Guest init successful, navigating to dashboard...');
-          this.router.navigateByUrl('/dashboard');
+          this.redirectAfterAuth();;
         } else {
           this.errorMessage = authResponse?.message || 'Error al iniciar como invitado';
         }
@@ -172,4 +173,14 @@ export class LoginComponent {
       }
     });
   }
+  private redirectAfterAuth(defaultUrl = '/dashboard'): void {
+    const redirectUrl = this.route.snapshot.queryParamMap.get('redirect');
+
+    if (redirectUrl) {
+      this.router.navigateByUrl(redirectUrl);
+    } else {
+      this.router.navigateByUrl(defaultUrl);
+    }
+  }
+
 }

@@ -1,19 +1,19 @@
 <div class="min-h-screen bg-base-100">
-  <!-- Header/Navbar -->
-  <div class="navbar bg-base-100 shadow-lg">
+  <!-- Header/Navbar - Improved contrast -->
+  <div class="navbar bg-base-200 shadow-lg border-b border-base-300">
     <div class="navbar-start">
       <button class="btn btn-ghost btn-circle" (click)="onCancel()">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
       </button>
-      <h1 class="text-xl font-bold">🏗️ Crear Nueva Sala</h1>
+      <h1 class="text-xl font-bold text-base-content">🏗️ Crear Nueva Sala</h1>
     </div>
     <div class="navbar-center">
       <div class="breadcrumbs text-sm">
         <ul>
-          <li><a (click)="onCancel()">Dashboard</a></li>
-          <li>Crear Sala</li>
+          <li><a class="text-base-content/80 hover:text-primary" (click)="onCancel()">Dashboard</a></li>
+          <li class="text-primary font-semibold">Crear Sala</li>
         </ul>
       </div>
     </div>
@@ -21,51 +21,49 @@
 
   <!-- Main Content -->
   <div class="container mx-auto px-4 py-8 max-w-2xl">
-    
-    <!-- Form Card -->
-    <div class="card bg-base-100 shadow-xl">
+
+    <!-- Form Card - Improved styling -->
+    <div class="card bg-base-100 shadow-xl border border-base-300">
       <div class="card-body">
-        <h2 class="card-title text-2xl mb-6">
+        <h2 class="card-title text-2xl mb-6 text-base-content">
           ✨ Nueva Sala de Chat
           <div class="badge badge-primary">Gratis</div>
         </h2>
 
         <!-- Success Message -->
-        <div *ngIf="successMessage" class="alert alert-success mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <div *ngIf="successMessage" class="alert alert-success mb-6 shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>{{ successMessage }}</span>
+          <span class="text-base-content">{{ successMessage }}</span>
         </div>
 
         <!-- Error Message -->
-        <div *ngIf="errorMessage" class="alert alert-error mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <div *ngIf="errorMessage" class="alert alert-error mb-6 shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>{{ errorMessage }}</span>
+          <span class="text-base-content">{{ errorMessage }}</span>
         </div>
 
         <!-- Form -->
         <form (ngSubmit)="onCreateRoom()" #roomForm="ngForm">
-          
+
           <!-- Room Name -->
-          <div class="form-control w-full mb-4">
+          <div class="form-control w-full mb-6">
             <label class="label">
-              <span class="label-text font-semibold">
+              <span class="label-text font-semibold text-base-content">
                 <span class="text-error">*</span> Nombre de la Sala
               </span>
-              <span class="label-text-alt">{{ roomData.name.length || 0 }}/50</span>
+              <span class="label-text-alt text-base-content/80">{{ roomData.name.length || 0 }}/50</span>
             </label>
-            <input 
-              type="text" 
-              placeholder="Ej: Sala de Programadores, Gamers Unidos, etc."
-              class="input input-bordered w-full" 
-              [(ngModel)]="roomData.name"
-              name="name"
-              required
-              maxlength="50"
-              [class.input-error]="roomData.name.length > 50">
+            <input type="text" placeholder="Ej: Sala de Programadores, Gamers Unidos, etc."
+              class="input input-bordered w-full bg-base-200" [(ngModel)]="roomData.name" name="name" required
+              maxlength="50" [class.input-error]="roomData.name.length > 50">
             <label class="label">
               <span class="label-text-alt text-base-content/60">
                 Elige un nombre atractivo y descriptivo
@@ -73,86 +71,59 @@
             </label>
           </div>
 
-          <!-- Room Description -->
-          <div class="form-control w-full mb-4">
-            <label class="label">
-              <span class="label-text font-semibold">Descripción (Opcional)</span>
-              <span class="label-text-alt">{{ roomData.description?.length || 0 }}/200</span>
-            </label>
-            <textarea 
-              class="textarea textarea-bordered h-24" 
-              placeholder="Describe brevemente de qué se trata tu sala..."
-              [(ngModel)]="roomData.description"
-              name="description"
-              maxlength="200"
-              [class.textarea-error]="roomData.description && roomData.description.length > 200"></textarea>
+          <!-- Room Description - Improved structure -->
+          <div class="form-control w-full mb-6">
+            <div class="flex justify-between items-start mb-2">
+              <label class="block font-semibold text-base-content mb-1">
+                Descripción (Opcional)
+              </label>
+              <span class="text-sm text-base-content/80">{{ roomData.description?.length || 0 }}/200</span>
+            </div>
+
+            <div class="relative">
+              <textarea class="textarea textarea-bordered w-full bg-base-200 h-24"
+                placeholder="Describe brevemente de qué se trata tu sala..." [(ngModel)]="roomData.description"
+                name="description" maxlength="200"
+                [class.textarea-error]="roomData.description && roomData.description.length > 200"></textarea>
+            </div>
+
+            <p class="mt-1 text-sm text-base-content/60">
+              Describe brevemente el propósito de la sala
+            </p>
           </div>
 
           <!-- Room Settings -->
-          <div class="divider">Configuración de la Sala</div>
+          <div class="divider text-base-content/70">Configuración de la Sala</div>
 
           <!-- Privacy Settings -->
-          <div class="form-control mb-4">
+          <div class="form-control mb-6 bg-base-200 rounded-lg p-4">
             <label class="label cursor-pointer">
-              <span class="label-text font-semibold">
+              <span class="label-text font-semibold text-base-content">
                 <span *ngIf="!roomData.is_private">🌍 Sala Pública</span>
                 <span *ngIf="roomData.is_private">🔒 Sala Privada</span>
               </span>
-              <input 
-                type="checkbox" 
-                class="toggle toggle-primary" 
-                [(ngModel)]="roomData.is_private"
-                name="is_private">
+              <input type="checkbox" class="toggle toggle-primary" [(ngModel)]="roomData.is_private" name="is_private">
             </label>
             <label class="label">
-              <span class="label-text-alt text-base-content/60">
+              <span class="label-text-alt text-base-content/70">
                 <span *ngIf="!roomData.is_private">Cualquiera puede encontrar y unirse a tu sala</span>
-                <span *ngIf="roomData.is_private">Solo usuarios con contraseña pueden unirse</span>
-              </span>
-            </label>
-          </div>
-
-          <!-- Allow Anonymous Users -->
-          <div class="form-control mb-6">
-            <label class="label cursor-pointer">
-              <span class="label-text font-semibold">
-                <span *ngIf="roomData.allow_anonymous">👥 Permitir Usuarios Anónimos</span>
-                <span *ngIf="!roomData.allow_anonymous">🔐 Solo Usuarios Registrados</span>
-              </span>
-              <input 
-                type="checkbox" 
-                class="toggle toggle-secondary" 
-                [(ngModel)]="roomData.allow_anonymous"
-                name="allow_anonymous">
-            </label>
-            <label class="label">
-              <span class="label-text-alt text-base-content/60">
-                <span *ngIf="roomData.allow_anonymous">Los invitados pueden unirse sin registrarse</span>
-                <span *ngIf="!roomData.allow_anonymous">Solo usuarios con cuenta pueden participar</span>
+                <span *ngIf="roomData.is_private">
+                  Solo usuarios con <span class="bg-base-300 px-1 rounded text-sm font-mono"
+                    style="font-family: 'Fira Mono', 'Menlo', 'Consolas', monospace;">El Link</span> pueden unirse
+                </span>
               </span>
             </label>
           </div>
 
           <!-- Action Buttons -->
-          <div class="card-actions justify-end">
-            <button 
-              type="button" 
-              class="btn btn-outline"
-              (click)="onReset()"
-              [disabled]="isLoading">
+          <div class="card-actions justify-end mt-6">
+            <button type="button" class="btn btn-outline" (click)="onReset()" [disabled]="isLoading">
               🔄 Limpiar
             </button>
-            <button 
-              type="button" 
-              class="btn btn-ghost"
-              (click)="onCancel()"
-              [disabled]="isLoading">
+            <button type="button" class="btn btn-ghost text-error" (click)="onCancel()" [disabled]="isLoading">
               ❌ Cancelar
             </button>
-            <button 
-              type="submit" 
-              class="btn btn-primary"
-              [class.loading]="isLoading"
+            <button type="submit" class="btn btn-primary shadow-md" [class.loading]="isLoading"
               [disabled]="isLoading || !roomData.name.trim()">
               <span *ngIf="!isLoading">🚀 Crear Sala</span>
               <span *ngIf="isLoading">Creando...</span>
@@ -162,11 +133,11 @@
       </div>
     </div>
 
-    <!-- Tips Card -->
-    <div class="card bg-info/10 border border-info/20 mt-6">
+    <!-- Tips Card - Improved styling -->
+    <div class="card bg-info/10 border border-info/20 mt-8">
       <div class="card-body">
-        <h3 class="card-title text-info">💡 Consejos para crear una gran sala</h3>
-        <ul class="list-disc list-inside space-y-1 text-sm">
+        <h3 class="card-title text-info text-lg">💡 Consejos para crear una gran sala</h3>
+        <ul class="list-disc list-inside space-y-2 text-base-content">
           <li>Usa un nombre descriptivo y fácil de recordar</li>
           <li>Escribe una descripción clara sobre el tema de la sala</li>
           <li>Las salas públicas tienen más participación</li>

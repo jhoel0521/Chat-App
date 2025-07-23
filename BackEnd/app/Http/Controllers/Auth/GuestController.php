@@ -38,12 +38,13 @@ class GuestController extends Controller
         ]);
 
         $token = JWTAuth::fromUser($user);
-
+        $ttl = config('jwt.ttl') * 60;
         return response()->json([
             'success' => true,
             'message' => 'Sesión anónima iniciada',
             'user' => $user,
             'token' => $token,
+            'expires_in' => $ttl,
         ], 201);
     }
 

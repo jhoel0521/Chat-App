@@ -8,12 +8,12 @@ Materia: **Programación Web II**
 
 ## 📘 Descripción del proyecto
 
-Esta aplicación es una plataforma de **chat en tiempo real** desarrollada como proyecto universitario. Combina tecnologías modernas como **PHP (Laravel)**, **MariaDB**, **WebSockets**, y **Angular** para ofrecer un sistema completo de salas de chat que permite:
+Esta aplicación es una plataforma de **chat HTTP con polling** desarrollada como proyecto universitario. Combina tecnologías modernas como **PHP (Laravel)**, **MariaDB**, y **Angular** para ofrecer un sistema completo de salas de chat que permite:
 
 - Chatear en **salas públicas o privadas**
 - Soporte para **usuarios anónimos** o **registrados**
-- Diferentes **tipos de mensajes** (texto con Markdown, imágenes, audio, video y documentos)
-- Funcionalidad en **tiempo real** con WebSockets
+- Diferentes **tipos de mensajes** (texto, imágenes y archivos)
+- Funcionalidad en **tiempo real** mediante polling HTTP
 - Persistencia de mensajes para usuarios registrados
 - Registro en caliente: un usuario anónimo puede registrarse y conservar sus mensajes
 
@@ -25,9 +25,447 @@ Esta aplicación es una plataforma de **chat en tiempo real** desarrollada como 
 | ------------- | ---------------------------------------------------- |
 | Backend       | Laravel 12.x (PHP 8.4)                               |
 | Base de datos | MariaDB 10.x                                         |
-| Realtime      | Laravel Broadcasting + Reverb WebSockets            |
+| Comunicación  | API REST con HTTP Polling                           |
 | Frontend      | Angular 20.x + DaisyUI + Tailwind CSS               |
-| Comunicación  | API REST y WebSocket Broadcasting                   |
+| Autenticación | JWT (JSON Web Tokens)                               |
+
+---
+
+## 🧪 Ejemplo de Interacción - 2 Usuarios en Sala de Chat
+
+### 📋 Datos de Prueba (DebugSeeder)
+
+```json
+{
+  "usuarios": [
+    {
+      "id": "uuid-admin-001",
+      "nombre": "Admin User",
+      "email": "admin@mytimer.com",
+      "password": "password",
+      "tipo": "registrado"
+    },
+    {
+      "id": "uuid-jhoel-002", 
+      "nombre": "Jhoel",
+      "email": "jhoel0521@gmail.com",
+      "password": "password",
+      "tipo": "registrado"
+    }
+  ],
+  "sala": {
+    "id": "019818d2-3be7-73aa-909f-387b36b70c35",
+    "nombre": "Chat Debug Room",
+    "descripcion": "Room for debugging and testing",
+    "es_privada": false,
+    "creado_por": "uuid-admin-001"
+  }
+}
+```
+
+### 🔄 Flujo Completo de Interacción
+
+#### 1️⃣ **Autenticación de Usuario 1 (Admin)**
+
+**REQUEST**
+```json
+POST /api/login
+Content-Type: application/json
+
+{
+  "email": "admin@mytimer.com",
+  "password": "password"
+}
+```
+
+**RESPONSE**
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "token_type": "bearer",
+    "expires_in": 3600,
+    "user": {
+      "id": "uuid-admin-001",
+      "name": "Admin User",
+      "email": "admin@mytimer.com",
+      "is_anonymous": false
+    }
+  }
+}
+```
+
+#### 2️⃣ **Autenticación de Usuario 2 (Jhoel)**
+
+**REQUEST**
+```json
+POST /api/login
+Content-Type: application/json
+
+{
+  "email": "jhoel0521@gmail.com",
+  "password": "password"
+}
+```
+
+**RESPONSE**
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "token_type": "bearer", 
+    "expires_in": 3600,
+    "user": {
+      "id": "uuid-jhoel-002",
+      "name": "Jhoel",
+      "email": "jhoel0521@gmail.com",
+      "is_anonymous": false
+    }
+  }
+}
+```
+
+#### 3️⃣ **Usuario 1 (Admin) se une a la sala**
+
+**REQUEST**
+```json
+POST /api/rooms/019818d2-3be7-73aa-909f-387b36b70c35/join
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+Content-Type: application/json
+```
+
+**RESPONSE**
+```json
+{
+  "success": true,
+  "message": "Te has unido a la sala exitosamente",
+  "data": {
+    "room": {
+      "id": "019818d2-3be7-73aa-909f-387b36b70c35",
+      "name": "Chat Debug Room",
+      "description": "Room for debugging and testing",
+      "is_private": false,
+      "created_by": "uuid-admin-001",
+      "users_count": 1
+    }
+  }
+}
+```
+
+#### 4️⃣ **Usuario 2 (Jhoel) se une a la sala**
+
+**REQUEST**
+```json
+POST /api/rooms/019818d2-3be7-73aa-909f-387b36b70c35/join
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+Content-Type: application/json
+```
+
+**RESPONSE**
+```json
+{
+  "success": true,
+  "message": "Te has unido a la sala exitosamente",
+  "data": {
+    "room": {
+      "id": "019818d2-3be7-73aa-909f-387b36b70c35",
+      "name": "Chat Debug Room",
+      "description": "Room for debugging and testing",
+      "is_private": false,
+      "created_by": "uuid-admin-001",
+      "users_count": 2
+    }
+  }
+}
+```
+
+#### 5️⃣ **Admin carga mensajes iniciales**
+
+**REQUEST**
+```json
+GET /api/messages?room_id=019818d2-3be7-73aa-909f-387b36b70c35&page=1
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+**RESPONSE**
+```json
+{
+  "success": true,
+  "data": {
+    "current_page": 1,
+    "data": [
+      {
+        "id": "msg-001",
+        "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+        "user_id": "uuid-admin-001",
+        "message": "Hola! Este es un mensaje de prueba del admin",
+        "message_type": "text",
+        "created_at": "2025-01-18T10:00:00Z",
+        "user": {
+          "id": "uuid-admin-001",
+          "name": "Admin User",
+          "is_anonymous": false
+        }
+      },
+      {
+        "id": "msg-002",
+        "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+        "user_id": "uuid-jhoel-002",
+        "message": "Hola admin! Mensaje de respuesta para testing",
+        "message_type": "text",
+        "created_at": "2025-01-18T10:01:00Z",
+        "user": {
+          "id": "uuid-jhoel-002",
+          "name": "Jhoel",
+          "is_anonymous": false
+        }
+      }
+    ],
+    "last_page": 1,
+    "per_page": 20,
+    "total": 2
+  }
+}
+```
+
+#### 6️⃣ **Admin envía un nuevo mensaje**
+
+**REQUEST**
+```json
+POST /api/messages
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+Content-Type: application/json
+
+{
+  "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+  "message": "¡Bienvenido al sistema de chat! Todo funciona perfectamente 🎉",
+  "message_type": "text"
+}
+```
+
+**RESPONSE**
+```json
+{
+  "success": true,
+  "data": {
+    "message": {
+      "id": "msg-003",
+      "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+      "user_id": "uuid-admin-001",
+      "message": "¡Bienvenido al sistema de chat! Todo funciona perfectamente 🎉",
+      "message_type": "text",
+      "created_at": "2025-01-18T14:30:15Z",
+      "updated_at": "2025-01-18T14:30:15Z",
+      "user": {
+        "id": "uuid-admin-001",
+        "name": "Admin User",
+        "is_anonymous": false
+      }
+    }
+  }
+}
+```
+
+#### 7️⃣ **Jhoel detecta el nuevo mensaje via polling**
+
+**REQUEST (automático cada 2 segundos)**
+```json
+GET /api/messages?room_id=019818d2-3be7-73aa-909f-387b36b70c35&page=1
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+**RESPONSE**
+```json
+{
+  "success": true,
+  "data": {
+    "current_page": 1,
+    "data": [
+      {
+        "id": "msg-001",
+        "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+        "user_id": "uuid-admin-001",
+        "message": "Hola! Este es un mensaje de prueba del admin",
+        "message_type": "text",
+        "created_at": "2025-01-18T10:00:00Z",
+        "user": {
+          "id": "uuid-admin-001",
+          "name": "Admin User",
+          "is_anonymous": false
+        }
+      },
+      {
+        "id": "msg-002",
+        "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+        "user_id": "uuid-jhoel-002",
+        "message": "Hola admin! Mensaje de respuesta para testing",
+        "message_type": "text",
+        "created_at": "2025-01-18T10:01:00Z",
+        "user": {
+          "id": "uuid-jhoel-002",
+          "name": "Jhoel",
+          "is_anonymous": false
+        }
+      },
+      {
+        "id": "msg-003",
+        "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+        "user_id": "uuid-admin-001",
+        "message": "¡Bienvenido al sistema de chat! Todo funciona perfectamente 🎉",
+        "message_type": "text",
+        "created_at": "2025-01-18T14:30:15Z",
+        "user": {
+          "id": "uuid-admin-001",
+          "name": "Admin User",
+          "is_anonymous": false
+        }
+      }
+    ],
+    "last_page": 1,
+    "per_page": 20,
+    "total": 3
+  }
+}
+```
+
+#### 8️⃣ **Jhoel responde al mensaje**
+
+**REQUEST**
+```json
+POST /api/messages
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+Content-Type: application/json
+
+{
+  "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+  "message": "¡Excelente! El sistema HTTP polling funciona muy bien 👍 Gracias por la implementación",
+  "message_type": "text"
+}
+```
+
+**RESPONSE**
+```json
+{
+  "success": true,
+  "data": {
+    "message": {
+      "id": "msg-004",
+      "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+      "user_id": "uuid-jhoel-002",
+      "message": "¡Excelente! El sistema HTTP polling funciona muy bien 👍 Gracias por la implementación",
+      "message_type": "text",
+      "created_at": "2025-01-18T14:31:45Z",
+      "updated_at": "2025-01-18T14:31:45Z",
+      "user": {
+        "id": "uuid-jhoel-002",
+        "name": "Jhoel",
+        "is_anonymous": false
+      }
+    }
+  }
+}
+```
+
+#### 9️⃣ **Admin recibe el mensaje via polling**
+
+**REQUEST (automático cada 2 segundos)**
+```json
+GET /api/messages?room_id=019818d2-3be7-73aa-909f-387b36b70c35&page=1
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+**RESPONSE (contiene el nuevo mensaje de Jhoel)**
+```json
+{
+  "success": true,
+  "data": {
+    "current_page": 1,
+    "data": [
+      {
+        "id": "msg-001",
+        "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+        "user_id": "uuid-admin-001",
+        "message": "Hola! Este es un mensaje de prueba del admin",
+        "message_type": "text",
+        "created_at": "2025-01-18T10:00:00Z",
+        "user": {
+          "id": "uuid-admin-001",
+          "name": "Admin User",
+          "is_anonymous": false
+        }
+      },
+      {
+        "id": "msg-002",
+        "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+        "user_id": "uuid-jhoel-002",
+        "message": "Hola admin! Mensaje de respuesta para testing",
+        "message_type": "text",
+        "created_at": "2025-01-18T10:01:00Z",
+        "user": {
+          "id": "uuid-jhoel-002",
+          "name": "Jhoel",
+          "is_anonymous": false
+        }
+      },
+      {
+        "id": "msg-003",
+        "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+        "user_id": "uuid-admin-001",
+        "message": "¡Bienvenido al sistema de chat! Todo funciona perfectamente 🎉",
+        "message_type": "text",
+        "created_at": "2025-01-18T14:30:15Z",
+        "user": {
+          "id": "uuid-admin-001",
+          "name": "Admin User",
+          "is_anonymous": false
+        }
+      },
+      {
+        "id": "msg-004",
+        "room_id": "019818d2-3be7-73aa-909f-387b36b70c35",
+        "user_id": "uuid-jhoel-002",
+        "message": "¡Excelente! El sistema HTTP polling funciona muy bien 👍 Gracias por la implementación",
+        "message_type": "text",
+        "created_at": "2025-01-18T14:31:45Z",
+        "user": {
+          "id": "uuid-jhoel-002",
+          "name": "Jhoel",
+          "is_anonymous": false
+        }
+      }
+    ],
+    "last_page": 1,
+    "per_page": 20,
+    "total": 4
+  }
+}
+```
+
+### ⚙️ **Configuración del Polling**
+
+```typescript
+// Frontend Angular - environment.ts
+export const environment = {
+  // ... otras configuraciones
+  polling: {
+    messagesInterval: 2000,    // Polling cada 2 segundos
+    presenceInterval: 5000,    // Verificar presencia cada 5 segundos
+    enabled: true              // Habilitar polling
+  }
+};
+```
+
+### 🎯 **Ventajas del Sistema HTTP Polling**
+
+| Ventaja | Descripción |
+|---------|-------------|
+| ✅ **Simplicidad** | No requiere configuración WebSocket compleja |
+| ✅ **Compatibilidad** | Funciona en cualquier navegador y red |
+| ✅ **Debugging** | Fácil depuración con herramientas HTTP estándar |
+| ✅ **Escalabilidad** | Simple de escalar horizontalmente |
+| ✅ **Confiabilidad** | Resiliente a caídas de conexión |
 
 ---
 
@@ -228,11 +666,11 @@ sequenceDiagram
 ```
 ---
 
-## 🛠️ API Routes y WebSockets
+## 🛠️ API Routes y Sistema HTTP Polling
 
 ### 📋 Resumen de Rutas API
 
-El backend expone una API REST completa para manejar autenticación, salas, mensajes y archivos. Todas las rutas están prefijadas con `/api/`.
+El backend expone una API REST completa para manejar autenticación, salas, mensajes y archivos. Todas las rutas están prefijadas con `/api/`. El sistema utiliza **HTTP Polling** para simular comunicación en tiempo real.
 
 #### 🔐 **Autenticación**
 | Método | Ruta | Controlador | Middleware | Descripción |
@@ -253,16 +691,17 @@ El backend expone una API REST completa para manejar autenticación, salas, mens
 | Método | Ruta | Controlador | Middleware | Descripción |
 |--------|------|-------------|------------|-------------|
 | GET | `/rooms` | RoomController@index | - | Listar salas públicas disponibles |
+| GET | `/my-rooms` | RoomController@myRooms | `auth:api` | Obtener salas del usuario |
 | POST | `/rooms` | RoomController@store | `auth:api` | Crear nueva sala |
 | GET | `/rooms/{room}` | RoomController@show | `auth:api` | Obtener detalles de una sala |
 | POST | `/rooms/{room}/join` | RoomController@join | `auth:api` | Unirse a sala (pública o privada) |
 | POST | `/rooms/{room}/leave` | RoomController@leave | `auth:api` | Abandonar sala |
 
-#### 💬 **Mensajería**
+#### 💬 **Mensajería HTTP**
 | Método | Ruta | Controlador | Middleware | Descripción |
 |--------|------|-------------|------------|-------------|
-| GET | `/rooms/{room}/messages` | MessageController@index | `auth:api` | Obtener historial de mensajes |
-| POST | `/rooms/{room}/messages` | MessageController@store | `auth:api` | Enviar mensaje (texto, imagen, etc.) |
+| GET | `/messages` | MessageController@index | `auth:api` | Obtener mensajes con paginación |
+| POST | `/messages` | MessageController@store | `auth:api` | Enviar mensaje nuevo |
 
 #### 📁 **Gestión de Archivos**
 | Método | Ruta | Controlador | Middleware | Descripción |
@@ -270,54 +709,76 @@ El backend expone una API REST completa para manejar autenticación, salas, mens
 | POST | `/files/upload` | FileController@upload | `auth:api` | Subir archivo multimedia |
 | GET | `/files/{file}` | FileController@show | `auth:api` | Ver/descargar archivo |
 
-### 🌐 **Sistema WebSocket en Tiempo Real**
+### 🔄 **Sistema HTTP Polling**
 
-#### 📡 **Eventos Broadcasting**
-| Evento | Canal | Trigger | Descripción |
-|--------|-------|---------|-------------|
-| `MessageSent` | `room.{id}` | Envío de mensaje | Difunde mensaje nuevo a todos en la sala |
-| `UserJoinedRoom` | `room.{id}` | Usuario se une | Notifica cuando alguien entra a la sala |
-| `UserLeftRoom` | `room.{id}` | Usuario abandona | Notifica cuando alguien sale de la sala |
+#### ⚡ **Flujo de Comunicación HTTP Polling**
+1. **📱 Usuario Frontend**: Envía mensaje via POST `/api/messages`
+2. **🖥️ Laravel Backend**: Guarda mensaje en base de datos y responde con el mensaje creado
+3. **🔄 Frontend Polling**: Cada cliente consulta GET `/api/messages` cada 2 segundos
+4. **📱 Actualización UI**: Frontend detecta nuevos mensajes y actualiza la interfaz
 
-#### 🔗 **Canales de Comunicación**
-| Canal | Tipo | Autorización | Uso |
-|-------|------|--------------|-----|
-| `App.Models.User.{id}` | Private | Solo el usuario propietario | Notificaciones personales |
-| `room.{roomId}` | Private | Usuarios de la sala | Mensajes y eventos de sala |
-
-#### 💡 **Configuración Frontend (Angular)**
+#### 🎛️ **Configuración de Polling**
 ```typescript
-// Conexión WebSocket con Laravel Reverb
-const echo = new Echo({
-    broadcaster: 'reverb',
-    key: process.env.VITE_REVERB_APP_KEY,
-    wsHost: process.env.VITE_REVERB_HOST,
-    wsPort: process.env.VITE_REVERB_PORT,
-    forceTLS: false,
-    enabledTransports: ['ws', 'wss'],
-});
-
-// Escuchar eventos de una sala específica
-echo.private(`room.${roomId}`)
-    .listen('message.sent', (data) => {
-        // Nuevo mensaje recibido en tiempo real
-        this.addMessageToChat(data.message);
-    })
-    .listen('user.joined', (data) => {
-        // Usuario se unió a la sala
-        this.showUserJoinedNotification(data.user);
-    })
-    .listen('user.left', (data) => {
-        // Usuario abandonó la sala
-        this.showUserLeftNotification(data.user);
-    });
+// Frontend Angular - environment.ts
+export const environment = {
+  polling: {
+    messagesInterval: 2000,    // Consultar mensajes cada 2 segundos
+    presenceInterval: 5000,    // Verificar presencia cada 5 segundos  
+    enabled: true              // Habilitar sistema de polling
+  }
+};
 ```
 
-#### ⚡ **Flujo de Comunicación en Tiempo Real**
-1. **📱 Usuario Frontend**: Envía mensaje via POST `/api/rooms/{room}/messages`
-2. **🖥️ Laravel Backend**: Guarda en DB y dispara evento `MessageSent`
-3. **🌐 Reverb WebSocket**: Difunde evento a canal `room.{id}`
-4. **📱 Todos los Frontend**: Reciben evento y actualizan UI instantáneamente
+#### 💡 **Implementación Frontend (Angular)**
+```typescript
+// Servicio de polling para mensajes
+private startMessagePolling(): void {
+  this.pollingSubscription = interval(environment.polling.messagesInterval)
+    .pipe(
+      switchMap(() => this.messageService.getMessages(this.roomId, 1))
+    )
+    .subscribe({
+      next: (response) => {
+        if (response.data) {
+          this.updateMessagesFromPolling(response.data);
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error en polling de mensajes:', error);
+      }
+    });
+}
+
+// Actualizar mensajes evitando duplicados
+private updateMessagesFromPolling(data: MessagesResponse): void {
+  if (data.data && Array.isArray(data.data)) {
+    const existingIds = new Set(this.messages.map(m => m.id));
+    const newMessages = data.data.filter((msg: Message) => !existingIds.has(msg.id));
+    
+    if (newMessages.length > 0) {
+      this.messages = [...this.messages, ...newMessages].sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      this.scrollToBottom();
+    }
+  }
+}
+```
+
+#### 🌟 **Ventajas del HTTP Polling**
+| Ventaja | Descripción |
+|---------|-------------|
+| ✅ **Simplicidad** | Implementación más simple que WebSockets |
+| ✅ **Compatibilidad** | Funciona en cualquier navegador y red corporativa |
+| ✅ **Debugging** | Fácil de depurar con herramientas HTTP estándar |
+| ✅ **Resiliente** | Automáticamente se recupera de errores de red |
+| ✅ **Escalable** | Fácil de balancear carga entre servidores |
+
+#### ⚖️ **Consideraciones de Rendimiento**
+- **Intervalo optimizado**: 2 segundos balancea tiempo real vs carga del servidor
+- **Detección de duplicados**: Frontend filtra mensajes ya mostrados
+- **Paginación eficiente**: Solo carga mensajes nuevos cuando es necesario
+- **Manejo de errores**: Continúa el polling aunque fallen requests individuales
 
 ---
 
@@ -356,4 +817,27 @@ echo.private(`room.${roomId}`)
 ---
 
 💬 Créditos
-Este proyecto fue desarrollado por Jhoel Cruz, estudiante de la Universidad Privada Domingo Savio (UPDS), como parte del curso de Programación Web II, con fines educativos y de aprendizaje profesional.
+Este proyecto fue desarrollado por **Jhoel Cruz**, estudiante de la **Universidad Privada Domingo Savio (UPDS)**, como parte del curso de **Programación Web II**, con fines educativos y de aprendizaje profesional.
+
+### 🚀 **Comandos para Ejecutar el Proyecto**
+
+```bash
+# Backend Laravel
+cd BackEnd
+composer install
+php artisan migrate:fresh --seed --seeder=DebugSeeder
+php artisan serve --host=127.0.0.1 --port=8000
+
+# Frontend Angular  
+cd FrontEnd
+npm install
+ng serve --host=0.0.0.0 --port=4200
+```
+
+### 👥 **Usuarios de Prueba Predefinidos**
+- **Admin**: `admin@mytimer.com` / `password`
+- **Jhoel**: `jhoel0521@gmail.com` / `password`
+- **Sala de Debug**: `019818d2-3be7-73aa-909f-387b36b70c35`
+
+### ⚙️ **Configuración de Polling**
+El sistema está configurado para realizar polling cada **2 segundos** para una experiencia de chat en tiempo real fluida y eficiente.

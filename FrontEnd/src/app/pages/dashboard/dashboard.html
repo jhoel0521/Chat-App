@@ -16,8 +16,18 @@
       <!-- User Info - Más destacado -->
       <div *ngIf="currentUser" class="dropdown dropdown-end">
         <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-          <div class="w-10 rounded-full bg-primary text-primary-content">
-            {{ currentUser.name.charAt(0).toUpperCase() }}
+          <div class="w-10 rounded-full overflow-hidden">
+            <!-- Mostrar foto de perfil si existe -->
+            <img *ngIf="hasProfilePhoto()" 
+                 [src]="getProfilePhotoUrl()" 
+                 [alt]="currentUser.name"
+                 class="w-full h-full object-cover">
+            
+            <!-- Mostrar inicial si no tiene foto -->
+            <div *ngIf="!hasProfilePhoto()" 
+                 class="w-full h-full bg-primary text-primary-content flex items-center justify-center">
+              {{ currentUser.name.charAt(0).toUpperCase() }}
+            </div>
           </div>
         </div>
         <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
@@ -26,9 +36,8 @@
             <span *ngIf="currentUser.is_anonymous" class="badge badge-warning badge-xs">Invitado</span>
             <span *ngIf="!currentUser.is_anonymous" class="badge badge-success badge-xs">Registrado</span>
           </li>
-          <li><a>Perfil</a></li>
-          <li><a>Configuración</a></li>
-          <li><a class="text-error font-medium" (click)="logout()">Cerrar Sesión</a></li>
+          <li><a (click)="goToProfile()">👤 Mi Perfil</a></li>
+          <li><a class="text-error font-medium" (click)="logout()">🚪 Cerrar Sesión</a></li>
         </ul>
       </div>
     </div>
@@ -103,7 +112,7 @@
         <div class="stat-value text-accent">
           {{ getTotalMessages() }}
         </div>
-        <div class="stat-desc text-base-content">Mensajes enviados hoy</div>
+        <div class="stat-desc text-base-content">Mensajes enviados</div>
       </div>
     </div>
 

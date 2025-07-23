@@ -32,9 +32,9 @@ export class ConfigService {
         return environment.guestKey;
     }
 
-    // 🔌 WebSocket Configuration
-    get websocketConfig() {
-        return environment.websocket;
+    // � Polling Configuration
+    get pollingConfig() {
+        return environment.polling;
     }
 
     // 📁 File Upload Configuration

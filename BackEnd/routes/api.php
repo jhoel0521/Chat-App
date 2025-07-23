@@ -7,7 +7,7 @@ use App\Http\Controllers\Auth\GuestController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\FileController;
-use App\Http\Controllers\WebSocketMessageController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,22 +33,15 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/token/refresh', [AuthController::class, 'refresh']);
     Route::patch('/guest/upgrade', [GuestController::class, 'upgrade']);
-});
 
-// 🧪 RUTAS DE PRUEBA - WebSocket
-Route::get('/test-websocket', function () {
-    $roomId = request('room_id', 'test');
-    $message = request('message', 'Mensaje de prueba desde Laravel!');
-    
-    \App\Events\TestMessage::dispatch($message, $roomId);
-    
-    return response()->json([
-        'success' => true,
-        'message' => 'Evento enviado',
-        'room_id' => $roomId,
-        'sent_message' => $message,
-        'timestamp' => now()->toISOString()
-    ]);
+    // 👤 Perfil de usuario
+    Route::get('/profile', [UserController::class, 'profile']);
+    Route::patch('/profile', [UserController::class, 'updateProfile']);
+    Route::patch('/profile/password', [UserController::class, 'changePassword']);
+    Route::post('/profile/photo', [UserController::class, 'uploadProfilePhoto']);
+    Route::delete('/profile/photo', [UserController::class, 'deleteProfilePhoto']);
+    Route::post('/profile/delete', [UserController::class, 'deleteAccount']);
+    Route::delete('/profile', [UserController::class, 'deleteAccount']);
 });
 
 // 🏠 Salas - Rutas protegidas
@@ -57,16 +50,17 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/my-rooms', [RoomController::class, 'myRooms']);
     Route::post('/rooms', [RoomController::class, 'store']);
     Route::get('/rooms/{room}', [RoomController::class, 'show']);
+    Route::get('/check/{room}', [RoomController::class, 'check']);
+    Route::put('/rooms/{room}', [RoomController::class, 'update']);
+    Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
     Route::post('/rooms/{room}/join', [RoomController::class, 'join']);
     Route::post('/rooms/{room}/leave', [RoomController::class, 'leave']);
-    
-    // 💬 Mensajes WebSocket - Endpoints dedicados para comunicación pura WebSocket
-    Route::prefix('ws')->group(function () {
-        Route::post('/messages/get', [MessageController::class, 'getMessages']);
-        Route::post('/messages/send', [MessageController::class, 'sendMessage']);
-    });
-    
-    //  Archivos
+
+    // 💬 Mensajes HTTP - Endpoints tradicionales
+    Route::get('/messages', [MessageController::class, 'index']);
+    Route::post('/messages', [MessageController::class, 'store']);
+
+    // 📁 Archivos
     Route::post('/files/upload', [FileController::class, 'upload']);
     Route::get('/files/{file}', [FileController::class, 'show']);
 });

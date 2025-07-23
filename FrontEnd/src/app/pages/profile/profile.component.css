@@ -1,0 +1,87 @@
+/* Animaciones personalizadas para los modales */
+.modal {
+  transition: all 0.3s ease-in-out;
+}
+
+.modal-box {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para la foto de perfil */
+.avatar img {
+  object-fit: cover;
+}
+
+/* Hover effects para botones */
+.btn:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+/* Estilos para las estadísticas */
+.stat {
+  transition: transform 0.2s ease;
+}
+
+.stat:hover {
+  transform: scale(1.02);
+}
+
+/* Estilos para las alertas */
+.alert {
+  animation: alertSlideDown 0.3s ease-out;
+}
+
+@keyframes alertSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para el preview de la foto */
+.file-input:focus {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-box {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+  
+  .stat {
+    padding: 1rem;
+  }
+}
+
+/* Loading states */
+.loading {
+  pointer-events: none;
+}
+
+/* Badge animations */
+.badge {
+  transition: all 0.2s ease;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+}

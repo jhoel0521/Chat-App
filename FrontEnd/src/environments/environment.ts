@@ -19,24 +19,7 @@ export const environment = {
     '/token/refresh',
   ],
 
-  // 🔌 WebSocket Configuration (Laravel Reverb)
-  websocket: {
-    broadcaster: 'reverb',
-    key: 'z0mwodskj2t35qi9thy3',
-    wsHost: 'localhost', // Host fijo para desarrollo
-    wsPort: 8080,
-    wssPort: 443, // Cambiar a 443 para producción
-    forceTLS: false,
-    enabledTransports: ['ws', 'wss'], // Restaurar ambos para compatibilidad
-    authEndpoint: 'http://localhost:8000/broadcasting/auth', // URL completa
-    auth: {
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    }
-  },
-
-  // 📁 File Upload
+  //  File Upload
   fileUpload: {
     maxSize: 10 * 1024 * 1024, // 10MB
     allowedTypes: [
@@ -62,11 +45,18 @@ export const environment = {
     reconnectDelay: 5000 // 5 seconds
   },
 
+  // 🔄 Polling Configuration
+  polling: {
+    messagesInterval: 2000, // 2 seconds
+    presenceInterval: 10000, // 10 seconds
+    enabled: true
+  },
+
   // 📱 App Configuration
   app: {
     name: 'Chat App',
     version: '1.0.0',
-    description: 'Real-time chat application',
+    description: 'Real-time chat application with HTTP polling',
     author: 'Jhoel Cruz - UPDS'
   },
 

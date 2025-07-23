@@ -191,7 +191,6 @@ async function main() {
     // Limpiar puertos que puedan estar ocupados
     log('🧹 Liberando puertos ocupados...', colors.yellow);
     await killProcessOnPort(8000); // Laravel API
-    await killProcessOnPort(8080); // Laravel Reverb WebSocket
     await killProcessOnPort(4200); // Angular Dev Server
     
     // Esperar un poco para que los procesos se cierren
@@ -214,17 +213,7 @@ async function main() {
     );
     processes.push(laravelProcess);
 
-    // 2. Iniciar Laravel Reverb (WebSocket)
-    const reverbProcess = await startProcess(
-      'php',
-      ['artisan', 'reverb:start', '--host=0.0.0.0', '--port=8080'],
-      { cwd: backendPath },
-      'Laravel Reverb',
-      colors.magenta
-    );
-    processes.push(reverbProcess);
-
-    // 3. Iniciar Angular (Frontend)
+    // 2. Iniciar Angular (Frontend)
     const angularProcess = await startProcess(
       'ng',
       ['serve', '--host=0.0.0.0', '--port=4200', '--open'],
@@ -239,7 +228,6 @@ async function main() {
     log(`${colors.bold}${colors.green}🎉 ¡Todos los servicios iniciados correctamente!${colors.reset}`, colors.green);
     log(`${colors.bold}${colors.green}═══════════════════════════════════════════════${colors.reset}`, colors.green);
     log(`${colors.green}🌐 Laravel API:      ${colors.white}http://localhost:8000${colors.reset}`);
-    log(`${colors.magenta}🔌 Laravel Reverb:   ${colors.white}ws://localhost:8080${colors.reset}`);
     log(`${colors.blue}🚀 Angular App:      ${colors.white}http://localhost:4200${colors.reset}`);
     log(`${colors.bold}${colors.green}═══════════════════════════════════════════════${colors.reset}`, colors.green);
     log('', colors.white);
@@ -251,7 +239,7 @@ async function main() {
       log('', colors.white);
       log('🛑 Deteniendo todos los servicios...', colors.yellow);
       
-      const serviceNames = ['Laravel API', 'Laravel Reverb', 'Angular'];
+      const serviceNames = ['Laravel API', 'Angular'];
       processes.forEach((proc, index) => {
         if (proc && !proc.killed) {
           log(`🔴 Deteniendo ${serviceNames[index]}...`, colors.red);
