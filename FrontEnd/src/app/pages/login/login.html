@@ -10,17 +10,49 @@
                 Únete a salas de chat en <strong>tiempo real</strong>. Chatea con usuarios registrados o como invitado.
             </p>
 
-            <span
-                class="inline-block mb-6 px-3 py-1 text-sm font-semibold rounded-full bg-primary text-primary-content shadow-md">
-                Laravel + Angular
-            </span>
+            <div class="flex flex-wrap gap-2 mb-6">
+                <span class="badge badge-primary">
+                    <i class="fab fa-laravel mr-1"></i> Laravel
+                </span>
+                <span class="badge badge-secondary">
+                    <i class="fab fa-angular mr-1"></i> Angular
+                </span>
+                <span class="badge badge-accent">
+                    <i class="fas fa-bolt mr-1"></i> Real-time
+                </span>
+            </div>
 
             <p class="text-sm italic text-gray-500 dark:text-gray-400">
                 Nota: Este chat usa <strong>polling</strong> para actualizar mensajes periódicamente en lugar de
                 <strong>WebSockets</strong>.
             </p>
-        </div>
 
+            <!-- Perfil del desarrollador -->
+            <div class="mt-8 p-4 bg-base-100 rounded-box shadow">
+                <div class="flex items-center mb-3">
+                    <div class="avatar">
+                        <div class="w-12 rounded-full">
+                            <img src="https://github.com/jhoel0521.png" alt="Avatar de Jhoel Cruz" />
+                        </div>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="font-bold">Jhoel Cruz</h3>
+                        <p class="text-sm text-gray-500">Desarrollador Full Stack</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <a href="https://github.com/jhoel0521" target="_blank"
+                        class="btn btn-sm btn-ghost w-full justify-start">
+                        <i class="fab fa-github mr-2"></i> Mi Perfil de GitHub
+                    </a>
+                    <a href="https://github.com/jhoel0521/Chat-App" target="_blank"
+                        class="btn btn-sm btn-ghost w-full justify-start">
+                        <i class="fas fa-code-branch mr-2"></i> Repositorio del Proyecto
+                    </a>
+                </div>
+            </div>
+        </div>
 
         <!-- Formularios de autenticación -->
         <div class="card w-full max-w-md shadow-2xl bg-base-100">
@@ -149,8 +181,14 @@
                 <!-- Footer -->
                 <div class="divider">Proyecto Universitario</div>
                 <div class="text-center text-sm opacity-70">
-                    <p>Desarrollado por <strong>Jhoel Cruz</strong></p>
+                    <p>Desarrollado por <a href="https://github.com/jhoel0521" target="_blank"
+                            class="link link-primary font-bold">Jhoel Cruz</a></p>
                     <p>UPDS - Programación Web II</p>
+                    <p class="mt-2">
+                        <a href="https://github.com/jhoel0521/Chat-App" target="_blank" class="link link-secondary">
+                            <i class="fas fa-external-link-alt mr-1"></i> Ver repositorio
+                        </a>
+                    </p>
                 </div>
             </div>
         </div>
