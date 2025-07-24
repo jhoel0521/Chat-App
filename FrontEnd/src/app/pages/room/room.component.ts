@@ -330,7 +330,7 @@ export class RoomComponent implements OnInit, OnDestroy {
    * Obtener enlace de invitación
    */
   getInviteLink(): string {
-    return `${window.location.origin}/rooms/${this.roomId}`;
+    return `${window.location.origin}/#/rooms/${this.roomId}`;
   }
 
   /**

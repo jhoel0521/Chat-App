@@ -1,6 +1,8 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { LocationStrategy, HashLocationStrategy } from '@angular/common';
+
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { unauthorizedInterceptor } from './interceptors/unauthorized.interceptor';
 
@@ -16,6 +18,7 @@ export const appConfig: ApplicationConfig = {
         authInterceptor,
         unauthorizedInterceptor
       ])
-    )
+    ),
+    { provide: LocationStrategy, useClass: HashLocationStrategy }
   ]
 };
