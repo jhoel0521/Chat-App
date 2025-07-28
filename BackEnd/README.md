@@ -1,4 +1,71 @@
 
+
+# Chat App Backend - Guía de Instalación y Documentación de Endpoints
+
+## Instalación y Primeros Pasos
+
+1. **Clona el repositorio y entra a la carpeta BackEnd:**
+   ```bash
+   git clone [https://github.com/jhoel0521/Chat-App](https://github.com/jhoel0521/Chat-App)
+   cd "Chat App/BackEnd"
+   ```
+
+2. **Instala las dependencias de PHP:**
+   ```bash
+   composer install
+   ```
+
+3. **Copia el archivo de entorno y configura tus variables:**
+   ```bash
+   copy .env.example .env
+   # O en Linux/Mac: cp .env.example .env
+   ```
+
+4. **Genera la clave de la aplicación y la clave JWT:**
+   ```bash
+   php artisan key:generate
+   php artisan jwt:secret
+   ```
+
+5. **Migra la base de datos:**
+   ```bash
+   php artisan migrate
+   ```
+
+6. **(Opcional) Carga datos de ejemplo:**
+   ```bash
+   php artisan migrate:seed --class=DebugSeeder
+   ```
+
+7. **Inicia el servidor de desarrollo:**
+   ```bash
+   php artisan serve
+   ```
+
+---
+
+## Acceso rápido con datos de ejemplo
+
+Si ejecutaste el seeder `DebugSeeder`, puedes iniciar sesión con:
+
+- **Usuario:** admin@mytimer.com
+- **Contraseña:** password
+
+O bien:
+- **Usuario:** jhoel0521@gmail.com
+- **Contraseña:** password
+
+Ejemplo de login:
+```json
+POST /api/login
+{
+  "email": "admin@mytimer.com",
+  "password": "password"
+}
+```
+
+---
+
 # API Chat App - Documentación de Endpoints
 
 Esta guía describe las rutas disponibles en la API del backend del Chat App, los parámetros requeridos y ejemplos de uso y respuesta para cada endpoint principal.
