@@ -1,61 +1,232 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# API Chat App - Documentación de Endpoints
 
-## About Laravel
+Esta guía describe las rutas disponibles en la API del backend del Chat App, los parámetros requeridos y ejemplos de uso y respuesta para cada endpoint principal.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Autenticación y Usuarios
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### POST `/api/register`
+**Descripción:** Registrar un nuevo usuario.
+**Body:**
+```json
+{
+  "name": "Nombre",
+  "email": "correo@ejemplo.com",
+  "password": "123456",
+  "password_confirmation": "123456"
+}
+```
+**Respuesta exitosa:**
+```json
+{
+  "success": true,
+  "message": "Usuario registrado exitosamente",
+  "user": { ... },
+  "token": "...",
+  "expires_in": 3600
+}
+```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### POST `/api/login`
+**Descripción:** Iniciar sesión.
+**Body:**
+```json
+{
+  "email": "correo@ejemplo.com",
+  "password": "123456"
+}
+```
+**Respuesta exitosa:**
+```json
+{
+  "success": true,
+  "message": "Sesión iniciada exitosamente",
+  "user": { ... },
+  "token": "...",
+  "expires_in": 3600
+}
+```
 
-## Learning Laravel
+### POST `/api/guest/init`
+**Descripción:** Iniciar sesión como invitado.
+**Body:**
+```json
+{
+  "name": "Invitado"
+}
+```
+**Respuesta:**
+```json
+{
+  "success": true,
+  "message": "Sesión anónima iniciada",
+  "user": { ... },
+  "token": "...",
+  "expires_in": 3600
+}
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### PATCH `/api/guest/upgrade`
+**Descripción:** Convertir usuario invitado en registrado.
+**Body:**
+```json
+{
+  "email": "correo@ejemplo.com",
+  "password": "123456",
+  "password_confirmation": "123456"
+}
+```
+**Respuesta:**
+```json
+{
+  "success": true,
+  "message": "Usuario convertido exitosamente. Tus mensajes se han conservado.",
+  "user": { ... },
+  "token": "..."
+}
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### POST `/api/logout`
+**Descripción:** Cerrar sesión (requiere token).
+**Respuesta:**
+```json
+{
+  "success": true,
+  "message": "Sesión cerrada exitosamente"
+}
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### GET `/api/me`
+**Descripción:** Obtener datos del usuario autenticado.
+**Respuesta:**
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
 
-## Laravel Sponsors
+### POST `/api/token/refresh`
+**Descripción:** Renovar token JWT.
+**Respuesta:**
+```json
+{
+  "success": true,
+  "token": "...",
+  "expires_in": 3600
+}
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Perfil de Usuario
 
-### Premium Partners
+### GET `/api/profile`
+**Descripción:** Obtener perfil del usuario.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### PATCH `/api/profile`
+**Descripción:** Actualizar nombre/email.
+**Body:**
+```json
+{
+  "name": "Nuevo Nombre",
+  "email": "nuevo@correo.com"
+}
+```
 
-## Contributing
+### PATCH `/api/profile/password`
+**Descripción:** Cambiar contraseña.
+**Body:**
+```json
+{
+  "current_password": "actual",
+  "new_password": "nueva",
+  "new_password_confirmation": "nueva"
+}
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### POST `/api/profile/photo`
+**Descripción:** Subir foto de perfil.
+**Body:** FormData con campo `profile_photo` (imagen).
 
-## Code of Conduct
+### DELETE `/api/profile/photo`
+**Descripción:** Eliminar foto de perfil.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### POST `/api/profile/delete` o DELETE `/api/profile`
+**Descripción:** Eliminar cuenta (requiere contraseña si no es anónimo).
 
-## Security Vulnerabilities
+## Salas (Rooms)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### GET `/api/rooms`
+**Descripción:** Listar salas públicas populares.
 
-## License
+### GET `/api/my-rooms`
+**Descripción:** Listar salas donde el usuario es creador o está unido.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### POST `/api/rooms`
+**Descripción:** Crear una nueva sala.
+**Body:**
+```json
+{
+  "name": "Sala 1",
+  "description": "Descripción",
+  "is_private": false
+}
+```
+
+### GET `/api/rooms/{room}`
+**Descripción:** Obtener detalles de una sala.
+
+### PUT `/api/rooms/{room}`
+**Descripción:** Actualizar sala (solo creador).
+**Body:**
+```json
+{
+  "name": "Nuevo nombre",
+  "description": "Nueva descripción",
+  "is_private": false
+}
+```
+
+### DELETE `/api/rooms/{room}`
+**Descripción:** Eliminar sala (solo creador).
+
+### POST `/api/rooms/{room}/join`
+**Descripción:** Unirse a una sala.
+
+### POST `/api/rooms/{room}/leave`
+**Descripción:** Abandonar una sala.
+
+### GET `/api/check/{room}`
+**Descripción:** Verificar acceso y estado en la sala.
+
+## Mensajes
+
+### GET `/api/messages?room_id={room_id}`
+**Descripción:** Listar mensajes de una sala (requiere estar unido).
+**Parámetros opcionales:** `last_timestamp` como limitador para tener mensajes después de la marca temporal.
+
+### POST `/api/messages`
+**Descripción:** Enviar mensaje a una sala.
+**Body:**
+```json
+{
+  "room_id": "uuid-sala",
+  "message": "Hola mundo",
+  "message_type": "text"
+}
+```
+
+## Archivos
+
+### POST `/api/files/upload`
+**Descripción:** Subir archivo a un mensaje.
+**Body:** FormData con campos `file` (archivo) y `message_id` (uuid).
+
+### GET `/api/files/{file}`
+**Descripción:** Descargar o mostrar archivo subido.
+
+---
+
+**Notas:**
+- Todos los endpoints `/api/*` requieren autenticación JWT salvo `/register`, `/login` y `/guest/init`.
+- Usar el header `Authorization: Bearer {token}` para endpoints protegidos.
+- Las respuestas de error incluyen el campo `success: false` y un mensaje descriptivo.
