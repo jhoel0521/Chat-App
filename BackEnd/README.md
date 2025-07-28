@@ -6,7 +6,7 @@
 
 1. **Clona el repositorio y entra a la carpeta BackEnd:**
    ```bash
-   git clone [https://github.com/jhoel0521/Chat-App](https://github.com/jhoel0521/Chat-App)
+   git clone https://github.com/jhoel0521/Chat-App
    cd "Chat App/BackEnd"
    ```
 
